@@ -1,0 +1,14 @@
+{
+  "Name": "Wave Link Control",
+  "Description": "Controla volumen y mute de canales, entradas, salidas y mixes de Elgato Wave Link 3 desde los diales y botones del Stream Dock.",
+  "Category": "Wave Link",
+  "com.raikerdev.wave_link.volumeknob": {
+    "Name": "Volume Knob",
+    "Tooltip": "Gira el dial para ajustar el volumen y presionalo para mutear. Elegi el canal, entrada, salida o mix en la configuracion."
+  },
+  "com.raikerdev.wave_link.mutetoggle": {
+    "Name": "Mute Toggle",
+    "Tooltip": "Presiona para alternar el mute. Elegi el canal, entrada, salida o mix en la configuracion."
+  },
+  "Localization": {}
+}

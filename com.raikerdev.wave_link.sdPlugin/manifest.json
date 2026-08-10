@@ -1,0 +1,76 @@
+{
+  "Actions": [
+    {
+      "UUID": "com.raikerdev.wave_link.volumeknob",
+      "Name": "Volume Knob",
+      "Tooltip": "Gira el dial para ajustar el volumen y presionalo para mutear. Elegi el canal, entrada, salida o mix en la configuracion.",
+      "Icon": "static/knob.png",
+      "DisableAutomaticStates": true,
+      "States": [
+        {
+          "Image": "static/knob.png",
+          "TitleAlignment": "center",
+          "FontSize": "10"
+        }
+      ],
+      "Settings": {
+        "targetType": "",
+        "targetId": "",
+        "targetName": ""
+      },
+      "Controllers": ["Keypad", "Knob"],
+      "UserTitleEnabled": true,
+      "SupportedInMultiActions": false,
+      "PropertyInspectorPath": "propertyInspector/target/index.html"
+    },
+    {
+      "UUID": "com.raikerdev.wave_link.mutetoggle",
+      "Name": "Mute Toggle",
+      "Tooltip": "Presiona para alternar el mute. Elegi el canal, entrada, salida o mix en la configuracion.",
+      "Icon": "static/mute.png",
+      "DisableAutomaticStates": true,
+      "States": [
+        {
+          "Image": "static/mute.png",
+          "TitleAlignment": "center",
+          "FontSize": "10"
+        },
+        {
+          "Image": "static/mute-active.png",
+          "TitleAlignment": "center",
+          "FontSize": "10"
+        }
+      ],
+      "Settings": {
+        "targetType": "",
+        "targetId": "",
+        "targetName": ""
+      },
+      "Controllers": ["Keypad"],
+      "UserTitleEnabled": true,
+      "SupportedInMultiActions": true,
+      "PropertyInspectorPath": "propertyInspector/target/index.html"
+    }
+  ],
+  "SDKVersion": 1,
+  "Author": "raikerdev",
+  "Name": "Wave Link Control",
+  "Description": "Controla volumen y mute de canales, entradas, salidas y mixes de Elgato Wave Link 3 desde los diales y botones del Stream Dock.",
+  "Icon": "static/plugin.png",
+  "Category": "Wave Link",
+  "CategoryIcon": "static/category.png",
+  "Version": "1.0.0",
+  "CodePathWin": "plugin/index.js",
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Software": {
+    "MinimumVersion": "3.10.188.226"
+  },
+  "Nodejs": {
+    "Version": "20"
+  }
+}

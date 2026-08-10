@@ -1,0 +1,13 @@
+{
+  "name": "com.raikerdev.wave-link",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Stream Dock plugin to control Elgato Wave Link 3 volumes and mutes from the physical dials and keys",
+  "type": "module",
+  "scripts": {
+    "deps": "cd com.raikerdev.wave_link.sdPlugin/plugin && npm install",
+    "icons": "node scripts/gen-icons.mjs",
+    "build": "cd com.raikerdev.wave_link.sdPlugin/plugin && npm run build",
+    "install-plugin": "npm run build"
+  }
+}
