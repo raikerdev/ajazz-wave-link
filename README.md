@@ -90,7 +90,9 @@ Tiene que decir `wavelink: connected on port <número>`.
 
 ## Desarrollo
 
-Documentación técnica en [dev_doc.md](dev_doc.md).
+Documentación técnica en [dev_doc.md](dev_doc.md) — empieza con un glosario de
+todos los términos del SDK. Ideas para versiones futuras en
+[ROADMAP.md](ROADMAP.md).
 
 ```
 com.raikerdev.wave_link.sdPlugin/   El plugin

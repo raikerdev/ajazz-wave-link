@@ -8,8 +8,8 @@
 </head>
 
 <body>
-    <div class="sdpi-wrapper p-3">
-        <div class="mb-3">
+    <div class="sdpi-wrapper">
+        <div class="mb-1">
             <label class="form-label" for="typeSelect">Tipo</label>
             <select class="form-select" id="typeSelect">
                 <option value="">Selecciona un tipo...</option>
@@ -21,7 +21,7 @@
             </select>
         </div>
 
-        <div class="mb-3">
+        <div class="mb-1">
             <label class="form-label" for="targetSelect">Destino</label>
             <select class="form-select" id="targetSelect">
                 <option value="">Selecciona un tipo primero...</option>
@@ -38,27 +38,43 @@
 
 <style>
     body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-family: sans-serif;
         padding: 8px;
-        background-color: #2a2a2a;
+        background-color: #2d2d2d;
         color: #fff;
     }
 
     /* The SDK vendors Bootstrap 5.1.3, which predates `data-bs-theme`, so its
-       controls only ship in the light theme. These are the dark values Mirabox's
-       own plugins render with: a field darker than the panel, a muted border and
-       a light chevron. */
+       controls only ship in the light theme and every dark value has to be set
+       here by hand.
+
+       House style for any control added later — keep these in sync:
+         panel   #2d2d2d   field    #3d3d3d   (field sits lighter than the panel)
+         border  #4a4a4a   focused  #7a7a7a
+         text    #dee2e6   labels   #ffffff at 12px
+         radius  4px       padding  5px 10px  font 12px */
+
+    .form-label {
+        color: #ffffff;
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+    
     .form-select {
         color: #dee2e6;
-        background-color: #212529;
-        border-color: #495057;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23dee2e6' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+        background-color: #3d3d3d;
+        border-color: #4a4a4a;
+        border-radius: 4px;
+        font-size: 12px;
+        padding: 5px 10px;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 16'%3e%3cpath fill='none' stroke='%23dee2e6' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
     }
 
     .form-select:focus {
         color: #dee2e6;
-        background-color: #212529;
-        border-color: #6ea8fe;
+        background-color: #3d3d3d;
+        border-color: #7a7a7a;
+        border-width: 1px;
         box-shadow: none;
     }
 
