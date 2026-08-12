@@ -180,13 +180,19 @@ mientras suena. Ver [dev_doc.md](dev_doc.md#la-cara-del-mute-toggle).
 
 ### Prioridad media
 
-#### 4. Paso por click configurable
+#### 4. Paso por click configurable — ✅ HECHO (2026-08-11)
 
-Hoy son 2% fijos (`STEP_PER_TICK`). Para un mix delicado conviene 1%; para ir de
-0 a 100 rápido, 5%. El paso a paso completo de cómo implementarlo está escrito
-como ejemplo en [dev_doc.md](dev_doc.md#receta-2--agregar-un-ajuste-nuevo).
+Campo **"Paso por click (%)"** en la configuración del Volume Knob, con 2% por
+defecto y acotado a 1..25. Para un mix delicado conviene 1%; para ir de 0 a 100
+rápido, 10%.
 
-**Esfuerzo** bajo · **Riesgo** bajo.
+El campo se esconde en el Mute Toggle, que comparte la misma pantalla y no tiene
+dial que girar. El valor se sanea en los dos lados —pantalla y plugin— porque los
+settings los persiste el host y podrían venir de una versión anterior.
+
+La [receta 2 de dev_doc.md](dev_doc.md#receta-2--agregar-un-ajuste-nuevo) quedó
+reescrita como recorrido de este código real, para usarla de plantilla la próxima
+vez.
 
 #### 5. Guardar los arneses de diagnóstico como scripts del repo — 🟡 PARCIAL
 

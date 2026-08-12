@@ -11,8 +11,12 @@ let render = require('./render/keyFace');
 const plugin = new Plugins('wave_link');
 const wavelink = new WaveLinkClient(log);
 
-/** How much one dial detent moves the fader, as a fraction of the full range. */
-const STEP_PER_TICK = 0.02;
+/** How much one dial detent moves the fader, in percent, when nothing is configured. */
+const DEFAULT_STEP_PERCENT = 2;
+
+/** Bounds for the configured step. Below 1 the dial feels dead, above 25 it is unusable. */
+const MIN_STEP_PERCENT = 1;
+const MAX_STEP_PERCENT = 25;
 
 /**
  * Floor between repaints. Wave Link emits a notification per level change, so a
@@ -33,7 +37,7 @@ const surfaceOf = new Map();
 /** Filled in below; inert unless a `dev.json` turns live-reload on. */
 let dev = { active: false, calibrate: false };
 
-const DEFAULT_SETTINGS = { targetType: '', targetId: '', targetName: '' };
+const DEFAULT_SETTINGS = { targetType: '', targetId: '', targetName: '', stepPercent: DEFAULT_STEP_PERCENT };
 
 /**
  * Resolves the live Wave Link target an action instance points at.
@@ -45,6 +49,16 @@ function resolveTarget(action, { context, payload }) {
     const { targetType, targetId } = settings;
     if (!targetType || !targetId) return undefined;
     return wavelink.getTarget(targetType, targetId);
+}
+
+/**
+ * How far one detent moves the fader, as a 0..1 fraction.
+ * Clamped here too, not only in the inspector: settings are persisted by the host
+ * and could have been written by an older build or edited by hand.
+ */
+function stepFraction(settings) {
+    const percent = Number(settings?.stepPercent) || DEFAULT_STEP_PERCENT;
+    return Math.min(MAX_STEP_PERCENT, Math.max(MIN_STEP_PERCENT, percent)) / 100;
 }
 
 /** Flashes the key and logs why an action could not act. */
@@ -295,9 +309,10 @@ plugin.volumeknob = new Actions({
             reportUnavailable(context);
             return;
         }
+        const step = stepFraction(payload?.settings || this.data[context]);
         // Accumulates the detents and writes once the spin settles, so turning fast
         // does not compute every step from a level Wave Link has not caught up to.
-        wavelink.nudgeLevel(target.targetType, target.targetId, payload.ticks * STEP_PER_TICK);
+        wavelink.nudgeLevel(target.targetType, target.targetId, payload.ticks * step);
     },
 
     // Pressing the dial, or the key when this action sits on a keypad, toggles mute.

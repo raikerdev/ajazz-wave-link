@@ -16,7 +16,8 @@
       "Settings": {
         "targetType": "",
         "targetId": "",
-        "targetName": ""
+        "targetName": "",
+        "stepPercent": 2
       },
       "Controllers": ["Keypad", "Knob"],
       "UserTitleEnabled": true,

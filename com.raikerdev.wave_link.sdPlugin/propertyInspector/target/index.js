@@ -11,8 +11,13 @@ const $local = false, $back = true, $dom = {
     main: $('.sdpi-wrapper'),
     type: $('#typeSelect'),
     target: $('#targetSelect'),
+    stepField: $('#stepField'),
+    step: $('#stepInput'),
     status: $('#status')
 };
+
+/** Fallback when the step has never been set, or was left empty. */
+const DEFAULT_STEP = 2;
 
 // The AJAZZ host has been observed calling this name instead of the Elgato one
 // that utils/action.js declares. Aliasing covers both host versions.
@@ -21,7 +26,22 @@ window.connectMiraBoxSDSocket = connectElgatoStreamDeckSocket;
 /** Everything the plugin last told us about Wave Link. */
 let allTargets = [];
 /** The selection currently persisted for this action instance. */
-let selected = { targetType: '', targetId: '', targetName: '' };
+let selected = { targetType: '', targetId: '', targetName: '', stepPercent: DEFAULT_STEP };
+
+/**
+ * This page is shared by both actions, so the step only shows for the one that
+ * has a dial to turn. `$action` is set by utils/action.js when the host connects.
+ */
+function applyActionVisibility() {
+    $dom.stepField.hidden = !String($action || '').endsWith('volumeknob');
+}
+
+/** Mirrors the settings onto the controls. */
+function restore(settings) {
+    selected = { targetType: '', targetId: '', targetName: '', stepPercent: DEFAULT_STEP, ...settings };
+    $dom.type.value = selected.targetType || '';
+    $dom.step.value = selected.stepPercent ?? DEFAULT_STEP;
+}
 
 function setStatus(text, isError = false) {
     $dom.status.textContent = text;
@@ -52,13 +72,19 @@ function renderTargets() {
     }
 }
 
-/** Persists the current dropdown state through the host. */
+/** Persists the current state of the controls through the host. */
 function save() {
     const targetType = $dom.type.value;
     const targetId = $dom.target.value;
     const match = allTargets.find(t => t.targetType === targetType && t.targetId === targetId);
 
-    selected = { targetType, targetId, targetName: match ? match.targetName : '' };
+    selected = {
+        targetType,
+        targetId,
+        targetName: match ? match.targetName : '',
+        // An empty or nonsense box falls back rather than writing a broken step.
+        stepPercent: Math.min(25, Math.max(1, Number($dom.step.value) || DEFAULT_STEP))
+    };
     $websocket.saveData(selected);
 
     if (match) setStatus(`Guardado: ${match.targetName}`);
@@ -68,19 +94,20 @@ function save() {
 
 $dom.type.addEventListener('change', () => {
     // A new Tipo invalidates the previous Destino.
-    selected = { targetType: $dom.type.value, targetId: '', targetName: '' };
+    selected = { ...selected, targetType: $dom.type.value, targetId: '', targetName: '' };
     renderTargets();
     save();
 });
 $dom.target.addEventListener('change', save);
+// `change` and not `input`: typing "15" would otherwise save "1" on the way.
+$dom.step.addEventListener('change', save);
 
 const $propEvent = {
     didReceiveGlobalSettings() { },
 
     didReceiveSettings({ settings }) {
         if (!settings) return;
-        selected = { targetType: '', targetId: '', targetName: '', ...settings };
-        $dom.type.value = selected.targetType || '';
+        restore(settings);
         renderTargets();
     },
 
@@ -88,10 +115,7 @@ const $propEvent = {
         if (payload?.type !== 'targets') return;
 
         allTargets = payload.targets || [];
-        if (payload.settings) {
-            selected = { targetType: '', targetId: '', targetName: '', ...payload.settings };
-            $dom.type.value = selected.targetType || '';
-        }
+        if (payload.settings) restore(payload.settings);
         renderTargets();
 
         if (!payload.connected) {
@@ -108,6 +132,8 @@ const $propEvent = {
 // happens after this script runs, so wait for it before asking for the targets.
 (function requestTargets(attempt = 0) {
     if ($websocket?.readyState === WebSocket.OPEN) {
+        // $action is known by now, so the step field can decide whether to show.
+        applyActionVisibility();
         $websocket.sendToPlugin({ type: 'getTargets' });
         return;
     }

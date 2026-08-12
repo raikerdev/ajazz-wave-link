@@ -38,9 +38,13 @@ Se puede poner en un dial o en un botón.
 
 | Gesto | Efecto |
 |---|---|
-| Girar el dial | Sube o baja el volumen, 2% por click |
+| Girar el dial | Sube o baja el volumen |
 | Apretar el dial | Alterna el mute |
 | Apretar el botón | Alterna el mute |
+
+En su configuración podés elegir **cuánto sube o baja por click** (entre 1% y
+25%; por defecto 2%). Para ajustar un mix con precisión bajalo a 1%; para
+recorrer todo el rango rápido, subilo a 10%.
 
 ### Mute Toggle
 

@@ -28,6 +28,12 @@
             </select>
         </div>
 
+        <!-- Only meaningful for Volume Knob; index.js hides it for Mute Toggle. -->
+        <div class="mb-1" id="stepField" hidden>
+            <label class="form-label" for="stepInput">Paso por click (%)</label>
+            <input class="form-control" type="number" id="stepInput" min="1" max="25" step="1">
+        </div>
+
         <div id="status" class="status">Conectando...</div>
     </div>
 
@@ -60,17 +66,22 @@
         margin-bottom: 4px;
     }
     
-    .form-select {
+    .form-select,
+    .form-control {
         color: #dee2e6;
         background-color: #3d3d3d;
         border-color: #4a4a4a;
         border-radius: 4px;
         font-size: 12px;
         padding: 5px 10px;
+    }
+
+    .form-select {
         background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 16'%3e%3cpath fill='none' stroke='%23dee2e6' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
     }
 
-    .form-select:focus {
+    .form-select:focus,
+    .form-control:focus {
         color: #dee2e6;
         background-color: #3d3d3d;
         border-color: #7a7a7a;
