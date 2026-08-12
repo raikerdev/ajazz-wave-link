@@ -18,6 +18,9 @@ const DEFAULT_STEP_PERCENT = 2;
 const MIN_STEP_PERCENT = 1;
 const MAX_STEP_PERCENT = 25;
 
+/** Turning with the dial held down moves this fraction of a normal detent. */
+const FINE_STEP_RATIO = 0.25;
+
 /**
  * Floor between repaints. Wave Link emits a notification per level change, so a
  * fast spin would otherwise push dozens of images per second down the socket.
@@ -33,6 +36,21 @@ let piContext = null;
  * artwork. Only `willAppear` reports the controller, hence the bookkeeping.
  */
 const surfaceOf = new Map();
+
+/**
+ * Dials being held down, keyed by context, and whether they have been turned
+ * since. Pressing a dial means "mute", but pressing *and turning* means "fine
+ * adjustment" — without telling those apart, every fine adjustment would end in
+ * an unwanted mute when the dial is released.
+ */
+const dialHold = new Map();
+
+/**
+ * The first dial turn of each run dumps its payload to the log.
+ * The AKP05E's protocol is not documented anywhere, so this is how we confirm
+ * that the host really reports `pressed` — one line per run, not a trace.
+ */
+let dialPayloadLogged = false;
 
 /** Filled in below; inert unless a `dev.json` turns live-reload on. */
 let dev = { active: false, calibrate: false };
@@ -296,27 +314,53 @@ plugin.volumeknob = new Actions({
 
     _willDisappear({ context }) {
         surfaceOf.delete(context);
+        dialHold.delete(context);
     },
 
     _didReceiveSettings({ context, payload }) {
         paintVolumeKnob(context, payload?.settings);
     },
 
+    dialDown({ context }) {
+        dialHold.set(context, { rotated: false });
+    },
+
     dialRotate(event) {
         const { context, payload } = event;
+
+        if (!dialPayloadLogged) {
+            dialPayloadLogged = true;
+            log.info(`first dialRotate payload: ${JSON.stringify(payload)}`);
+        }
+
         const target = resolveTarget(this, event);
         if (!target) {
             reportUnavailable(context);
             return;
         }
-        const step = stepFraction(payload?.settings || this.data[context]);
+
+        // The host reports whether the dial is being held while it turns.
+        const fine = payload?.pressed === true;
+        if (fine) {
+            const hold = dialHold.get(context) || { rotated: false };
+            if (!hold.rotated) log.info(`fine adjustment on ${target.targetName}`);
+            hold.rotated = true;
+            dialHold.set(context, hold);
+        }
+
+        const step = stepFraction(payload?.settings || this.data[context]) * (fine ? FINE_STEP_RATIO : 1);
         // Accumulates the detents and writes once the spin settles, so turning fast
         // does not compute every step from a level Wave Link has not caught up to.
         wavelink.nudgeLevel(target.targetType, target.targetId, payload.ticks * step);
     },
 
-    // Pressing the dial, or the key when this action sits on a keypad, toggles mute.
     dialUp(event) {
+        const hold = dialHold.get(event.context);
+        dialHold.delete(event.context);
+
+        // The press was the modifier for a fine adjustment, not a request to mute.
+        if (hold?.rotated) return;
+
         toggleMute(this, event);
     },
 

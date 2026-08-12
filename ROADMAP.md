@@ -211,16 +211,19 @@ se reescriben en la carpeta temporal cada vez que hacen falta:
 
 **Esfuerzo** bajo · **Riesgo** ninguno.
 
-#### 6. Ajuste fino apretando el dial
+#### 6. Ajuste fino apretando el dial — ✅ HECHO (2026-08-12)
 
-El evento `dialRotate` trae un campo `pressed`. Girar con el dial apretado podría
-mover de a 0.5% para ajustes finos. Es un gesto que ya existe en el hardware y
-hoy se desperdicia.
+Girar con el dial apretado mueve un cuarto de paso. Soltar sin haber girado
+sigue muteando; soltar después de girar, no. Detalles en
+[dev_doc.md](dev_doc.md#acciones).
 
-**Ojo.** Hoy soltar el dial (`dialUp`) mutea. Habría que no mutear si hubo giro
-mientras estaba apretado, o el gesto fino terminaría muteando siempre.
+Probado corriendo el proceso real del plugin contra un host simulado: paso fino,
+paso normal y mute salen los tres como corresponde.
 
-**Esfuerzo** bajo · **Riesgo** bajo.
+**Falta confirmarlo en el aparato**: no hay documentación del AKP05E que diga si
+reporta `pressed`, así que la primera rotación de cada arranque vuelca su payload
+al log para poder verificarlo. Si no lo reporta, el gesto no se activa y no rompe
+nada.
 
 #### 7. Acciones nuevas para botones
 

@@ -55,6 +55,28 @@ function clamp01(value) {
 }
 
 /**
+ * Folds a partial update into a list of things that have ids.
+ *
+ * Needed because `outputDeviceChanged` and `inputDeviceChanged` echo back **only
+ * the entry that moved, and only the fields that moved** — a level change arrives
+ * as `[{id, name, level}]` with no `isMuted` and no `mixId`. Replacing the cached
+ * array with that wipes both, and drops every sibling the device still has.
+ * (`channelChanged` is not like this: it sends its `mixes` complete.)
+ */
+function mergeById(existing = [], incoming = []) {
+    const merged = existing.map(item => {
+        const update = incoming.find(candidate => candidate.id === item.id);
+        return update ? { ...item, ...update } : item;
+    });
+
+    for (const item of incoming) {
+        if (!merged.some(m => m.id === item.id)) merged.push(item);
+    }
+
+    return merged;
+}
+
+/**
  * Talks JSON-RPC 2.0 over a WebSocket to the local Wave Link 3 instance.
  *
  * Emits `ready` once a snapshot has loaded, `changed` whenever Wave Link pushes
@@ -175,7 +197,10 @@ class WaveLinkClient extends EventEmitter {
             case 'inputDeviceChanged': {
                 const idx = this.inputDevices.findIndex(d => d.id === msg.params.id);
                 if (idx >= 0 && msg.params.inputs) {
-                    this.inputDevices[idx] = { ...this.inputDevices[idx], inputs: msg.params.inputs };
+                    this.inputDevices[idx] = {
+                        ...this.inputDevices[idx],
+                        inputs: mergeById(this.inputDevices[idx].inputs, msg.params.inputs)
+                    };
                 }
                 break;
             }
@@ -185,7 +210,10 @@ class WaveLinkClient extends EventEmitter {
             case 'outputDeviceChanged': {
                 const idx = this.outputDevices.findIndex(d => d.id === msg.params.id);
                 if (idx >= 0 && msg.params.outputs) {
-                    this.outputDevices[idx] = { ...this.outputDevices[idx], outputs: msg.params.outputs };
+                    this.outputDevices[idx] = {
+                        ...this.outputDevices[idx],
+                        outputs: mergeById(this.outputDevices[idx].outputs, msg.params.outputs)
+                    };
                 }
                 break;
             }

@@ -39,6 +39,7 @@ Se puede poner en un dial o en un botón.
 | Gesto | Efecto |
 |---|---|
 | Girar el dial | Sube o baja el volumen |
+| Girar el dial **apretándolo** | Ajuste fino: un cuarto de paso por click |
 | Apretar el dial | Alterna el mute |
 | Apretar el botón | Alterna el mute |
 
