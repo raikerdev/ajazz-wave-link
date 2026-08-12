@@ -137,6 +137,7 @@
   "Category": "Wave Link",
   "CategoryIcon": "static/category.png",
   "Version": "1.0.0",
+  "URL": "https://github.com/raikerdev/ajazz-wave-link",
   "CodePathWin": "plugin/index.js",
   "OS": [
     {

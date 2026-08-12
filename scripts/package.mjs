@@ -37,6 +37,13 @@ const SHIPS = [
 /** The bundled entry point, which replaces the sources under `plugin/`. */
 const BUNDLE = join(SOURCE, 'plugin', 'build', 'index.js');
 
+/**
+ * The licence lives at the repo root — that is where GitHub and people look for
+ * it — but it also ships, because the package grants rights and should say so.
+ * Copied rather than duplicated, so there is one file to keep correct.
+ */
+const LICENSE = join(ROOT, 'LICENSE');
+
 const manifest = JSON.parse(readFileSync(join(SOURCE, 'manifest.json'), 'utf-8'));
 const version = manifest.Version;
 
@@ -71,6 +78,12 @@ for (const entry of SHIPS) {
 
 mkdirSync(join(STAGING, 'plugin'), { recursive: true });
 cpSync(BUNDLE, join(STAGING, 'plugin', 'index.js'));
+
+if (!existsSync(LICENSE)) {
+    console.error('\nFalta el archivo LICENSE en la raiz del repositorio');
+    process.exit(1);
+}
+cpSync(LICENSE, join(STAGING, 'LICENSE'));
 
 // --- sanity checks ------------------------------------------------------
 // Cheap, and they catch exactly the mistakes that have already happened once.

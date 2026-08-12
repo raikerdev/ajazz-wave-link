@@ -168,3 +168,14 @@ npm run probe
 
 Construido sobre el template `SDNodeJsSDKV2` del
 [SDK oficial de StreamDock](https://github.com/MiraboxSpace/StreamDock-Plugin-SDK).
+
+Para armar el paquete distribuible:
+
+```bash
+npm run package
+```
+
+## Licencia
+
+[MIT](LICENSE) — podés usarlo, modificarlo y redistribuirlo libremente,
+conservando el aviso de copyright.
