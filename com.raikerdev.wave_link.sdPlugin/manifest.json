@@ -53,6 +53,32 @@
       "PropertyInspectorPath": "propertyInspector/target/index.html"
     },
     {
+      "UUID": "com.raikerdev.wave_link.volumebutton",
+      "Name": "Volume Button",
+      "Tooltip": "Sube, baja o fija el volumen desde un boton, sin necesidad de un dial.",
+      "Icon": "static/volumebutton.png",
+      "DisableAutomaticStates": true,
+      "States": [
+        {
+          "Image": "static/volumebutton.png",
+          "TitleAlignment": "center",
+          "FontSize": "10"
+        }
+      ],
+      "Settings": {
+        "targetType": "",
+        "targetId": "",
+        "targetName": "",
+        "mode": "up",
+        "stepPercent": 5,
+        "levelPercent": 50
+      },
+      "Controllers": ["Keypad"],
+      "UserTitleEnabled": true,
+      "SupportedInMultiActions": true,
+      "PropertyInspectorPath": "propertyInspector/target/index.html"
+    },
+    {
       "UUID": "com.raikerdev.wave_link.outputmix",
       "Name": "Output Mix",
       "Tooltip": "Cambia a que mix escucha una salida. Con un mix alternativo configurado, alterna entre los dos.",

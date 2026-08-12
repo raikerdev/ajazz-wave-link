@@ -225,23 +225,20 @@ reporta `pressed`, así que la primera rotación de cada arranque vuelca su payl
 al log para poder verificarlo. Si no lo reporta, el gesto no se activa y no rompe
 nada.
 
-#### 7. Acciones nuevas para botones
+#### 7. Acciones nuevas para botones — ✅ HECHO (2026-08-12)
 
-El plugin está pensado para diales; en botones queda pobre. Candidatas:
+Una sola acción **Volume Button** con tres modos —subir, bajar y fijar en un
+valor— en vez de tres acciones separadas: comparte la misma pantalla de
+configuración y no infla el listado de la categoría. Cubre lo que el oficial
+llama *Adjust* y *Set*.
 
-- **Volume Up / Volume Down** — subir o bajar un paso, para quien no tiene diales
-  libres.
-- **Set Volume** — saltar a un valor fijo. Un botón "música al 30%" es más rápido
-  que girar.
+Probado corriendo el proceso real contra un host simulado: +10%, −10%, fijar en
+25% y fijar en 0% dan todos exacto.
 
-Las tres reusan `client.setLevel` tal cual. El trabajo es manifest, un handler y
-un campo más en la pantalla de configuración.
-
-Son las mismas que el oficial llama *Set* y *Adjust*. El oficial además permite
-que el *Set* haga un **fundido** hasta el valor en vez de saltar; con `setLevel`
-ya disponible, eso es un bucle de unos pocos pasos.
-
-**Esfuerzo** medio · **Riesgo** bajo.
+**Queda pendiente el fundido** del *Set*, que el oficial sí tiene: llegar al valor
+progresivamente en vez de saltar. Con `setLevel` disponible es un bucle de unos
+pocos pasos, pero hay que pensar cómo convive con los niveles optimistas del giro
+rápido.
 
 #### 8. Acción "Cambiar el mix de una salida" — ✅ HECHO (2026-08-11)
 

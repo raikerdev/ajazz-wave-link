@@ -10,6 +10,10 @@
     "Name": "Mute Toggle",
     "Tooltip": "Press to toggle mute. Pick the channel, input, output or mix in the settings."
   },
+  "com.raikerdev.wave_link.volumebutton": {
+    "Name": "Volume Button",
+    "Tooltip": "Raise, lower or set the volume from a key, with no dial needed."
+  },
   "com.raikerdev.wave_link.outputmix": {
     "Name": "Output Mix",
     "Tooltip": "Change which mix an output listens to. Set an alternate mix and it flips between the two."

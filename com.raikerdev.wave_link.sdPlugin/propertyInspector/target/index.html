@@ -28,10 +28,24 @@
             </select>
         </div>
 
-        <!-- Only meaningful for Volume Knob; index.js hides it for Mute Toggle. -->
+        <!-- Volume Button only. index.js shows the fields each action needs. -->
+        <div class="mb-1" id="modeField" hidden>
+            <label class="form-label" for="modeSelect">Al presionar</label>
+            <select class="form-select" id="modeSelect">
+                <option value="up">Subir el volumen</option>
+                <option value="down">Bajar el volumen</option>
+                <option value="set">Fijar en un valor</option>
+            </select>
+        </div>
+
         <div class="mb-1" id="stepField" hidden>
-            <label class="form-label" for="stepInput">Paso por click (%)</label>
+            <label class="form-label" for="stepInput">Paso (%)</label>
             <input class="form-control" type="number" id="stepInput" min="1" max="25" step="1">
+        </div>
+
+        <div class="mb-1" id="levelField" hidden>
+            <label class="form-label" for="levelInput">Volumen (%)</label>
+            <input class="form-control" type="number" id="levelInput" min="0" max="100" step="1">
         </div>
 
         <div id="status" class="status">Conectando...</div>

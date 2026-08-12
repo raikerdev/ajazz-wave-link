@@ -154,6 +154,44 @@ function paintVolumeKnob(context, settings) {
     plugin.setImage(context, render.toDataUri(render.volumeFace(target, icon, surface)));
 }
 
+/** Percentage a Volume Button jumps to in `set` mode, clamped to something sane. */
+function levelFraction(settings) {
+    const percent = Number(settings?.levelPercent);
+    return Math.min(100, Math.max(0, Number.isFinite(percent) ? percent : 50)) / 100;
+}
+
+/** Short label for what pressing a Volume Button does, drawn on the key. */
+function volumeButtonOperation(settings) {
+    const step = Math.round(stepFraction(settings) * 100);
+    switch (settings?.mode) {
+        case 'down': return `− ${step}%`;
+        case 'set': return `→ ${Math.round(levelFraction(settings) * 100)}%`;
+        default: return `+ ${step}%`;
+    }
+}
+
+/** Draws a Volume Button: the level now, and what pressing will do to it. */
+function paintVolumeButton(context, settings) {
+    const { targetType, targetId } = settings || {};
+
+    if (!targetType || !targetId) {
+        plugin.setImage(context, render.toDataUri(render.unconfiguredFace('Sin destino')));
+        return;
+    }
+
+    const target = wavelink.getTarget(targetType, targetId);
+    if (!target) {
+        const why = wavelink.isReady() ? 'No existe' : 'Sin conexión';
+        plugin.setImage(context, render.toDataUri(render.unconfiguredFace(why)));
+        return;
+    }
+
+    const icon = wavelink.getIcon(targetType, targetId);
+    plugin.setImage(context, render.toDataUri(
+        render.volumeButtonFace(target, icon, volumeButtonOperation(settings))
+    ));
+}
+
 /**
  * Works out what an Output Mix key is looking at and what pressing it will do.
  *
@@ -211,6 +249,11 @@ function repaintAll() {
     if (plugin.mutetoggle) {
         for (const [context, settings] of Object.entries(plugin.mutetoggle.data)) {
             paintMuteToggle(context, settings);
+        }
+    }
+    if (plugin.volumebutton) {
+        for (const [context, settings] of Object.entries(plugin.volumebutton.data)) {
+            paintVolumeButton(context, settings);
         }
     }
     if (plugin.outputmix) {
@@ -386,6 +429,44 @@ plugin.mutetoggle = new Actions({
         await toggleMute(this, event);
         // Wave Link echoes the change back as a notification, which repaints the
         // face through requestRepaint — no optimistic painting needed here.
+    }
+});
+
+plugin.volumebutton = new Actions({
+    ...targetActionBase(),
+    default: { targetType: '', targetId: '', targetName: '', mode: 'up', stepPercent: 5, levelPercent: 50 },
+
+    _willAppear({ context, payload }) {
+        paintVolumeButton(context, payload?.settings);
+    },
+
+    _didReceiveSettings({ context, payload }) {
+        paintVolumeButton(context, payload?.settings);
+    },
+
+    keyUp(event) {
+        const { context, payload } = event;
+        const settings = payload?.settings || this.data[context];
+        const target = resolveTarget(this, event);
+
+        if (!target) {
+            reportUnavailable(context);
+            return;
+        }
+
+        const fail = err => {
+            log.error(`volume button failed for ${target.targetName}: ${err.message}`);
+            plugin.showAlert(context);
+        };
+
+        if (settings?.mode === 'set') {
+            // A jump to an absolute value: no accumulating, straight write.
+            wavelink.setLevel(target.targetType, target.targetId, levelFraction(settings)).catch(fail);
+            return;
+        }
+
+        const delta = stepFraction(settings) * (settings?.mode === 'down' ? -1 : 1);
+        wavelink.nudgeLevel(target.targetType, target.targetId, delta);
     }
 });
 

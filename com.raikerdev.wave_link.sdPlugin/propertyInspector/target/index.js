@@ -11,36 +11,73 @@ const $local = false, $back = true, $dom = {
     main: $('.sdpi-wrapper'),
     type: $('#typeSelect'),
     target: $('#targetSelect'),
+    modeField: $('#modeField'),
+    mode: $('#modeSelect'),
     stepField: $('#stepField'),
+    stepLabel: $('label[for="stepInput"]'),
     step: $('#stepInput'),
+    levelField: $('#levelField'),
+    level: $('#levelInput'),
     status: $('#status')
 };
 
-/** Fallback when the step has never been set, or was left empty. */
+/** Fallbacks for when a field has never been set, or was left empty. */
 const DEFAULT_STEP = 2;
+const DEFAULT_BUTTON_STEP = 5;
+const DEFAULT_LEVEL = 50;
 
-// The AJAZZ host has been observed calling this name instead of the Elgato one
-// that utils/action.js declares. Aliasing covers both host versions.
-window.connectMiraBoxSDSocket = connectElgatoStreamDeckSocket;
+/**
+ * Wraps the SDK's entry point so the form can lay itself out the moment the host
+ * connects. `utils/action.js` sets `$action` synchronously before it opens the
+ * socket, so by the time the wrapper returns we know which action this is.
+ *
+ * Doing it here rather than after the first reply matters: otherwise the fields
+ * stay hidden whenever the plugin is slow to answer, or never answers.
+ *
+ * The AJAZZ host has been observed calling `connectMiraBoxSDSocket` instead of
+ * the Elgato name, so both point at the wrapper.
+ */
+const hostConnect = connectElgatoStreamDeckSocket;
+window.connectMiraBoxSDSocket = window.connectElgatoStreamDeckSocket = function (...args) {
+    const result = hostConnect.apply(this, args);
+    applyActionVisibility();
+    return result;
+};
 
 /** Everything the plugin last told us about Wave Link. */
 let allTargets = [];
 /** The selection currently persisted for this action instance. */
-let selected = { targetType: '', targetId: '', targetName: '', stepPercent: DEFAULT_STEP };
+let selected = { targetType: '', targetId: '', targetName: '' };
+
+/** Which action this inspector was opened for — the last segment of its UUID. */
+const actionName = () => String($action || '').split('.').pop();
 
 /**
- * This page is shared by both actions, so the step only shows for the one that
- * has a dial to turn. `$action` is set by utils/action.js when the host connects.
+ * Three actions share this page, so each field appears only where it means
+ * something. `$action` is set by utils/action.js when the host connects.
  */
 function applyActionVisibility() {
-    $dom.stepField.hidden = !String($action || '').endsWith('volumeknob');
+    const action = actionName();
+    const isKnob = action === 'volumeknob';
+    const isButton = action === 'volumebutton';
+    const mode = $dom.mode.value;
+
+    $dom.modeField.hidden = !isButton;
+    // A step is a step whether it comes from a detent or a press; only the wording differs.
+    $dom.stepField.hidden = !(isKnob || (isButton && mode !== 'set'));
+    $dom.stepLabel.textContent = isKnob ? 'Paso por click (%)' : 'Paso (%)';
+    $dom.levelField.hidden = !(isButton && mode === 'set');
 }
 
 /** Mirrors the settings onto the controls. */
 function restore(settings) {
-    selected = { targetType: '', targetId: '', targetName: '', stepPercent: DEFAULT_STEP, ...settings };
+    const stepDefault = actionName() === 'volumebutton' ? DEFAULT_BUTTON_STEP : DEFAULT_STEP;
+    selected = { targetType: '', targetId: '', targetName: '', ...settings };
     $dom.type.value = selected.targetType || '';
-    $dom.step.value = selected.stepPercent ?? DEFAULT_STEP;
+    $dom.mode.value = selected.mode || 'up';
+    $dom.step.value = selected.stepPercent ?? stepDefault;
+    $dom.level.value = selected.levelPercent ?? DEFAULT_LEVEL;
+    applyActionVisibility();
 }
 
 function setStatus(text, isError = false) {
@@ -78,12 +115,18 @@ function save() {
     const targetId = $dom.target.value;
     const match = allTargets.find(t => t.targetType === targetType && t.targetId === targetId);
 
+    const stepDefault = actionName() === 'volumebutton' ? DEFAULT_BUTTON_STEP : DEFAULT_STEP;
+    const level = Number($dom.level.value);
+
     selected = {
         targetType,
         targetId,
         targetName: match ? match.targetName : '',
-        // An empty or nonsense box falls back rather than writing a broken step.
-        stepPercent: Math.min(25, Math.max(1, Number($dom.step.value) || DEFAULT_STEP))
+        mode: $dom.mode.value,
+        // An empty or nonsense box falls back rather than writing a broken value.
+        stepPercent: Math.min(25, Math.max(1, Number($dom.step.value) || stepDefault)),
+        // 0 is a legitimate level, so this cannot lean on `||`.
+        levelPercent: Math.min(100, Math.max(0, Number.isFinite(level) && $dom.level.value !== '' ? level : DEFAULT_LEVEL))
     };
     $websocket.saveData(selected);
 
@@ -101,6 +144,12 @@ $dom.type.addEventListener('change', () => {
 $dom.target.addEventListener('change', save);
 // `change` and not `input`: typing "15" would otherwise save "1" on the way.
 $dom.step.addEventListener('change', save);
+$dom.level.addEventListener('change', save);
+$dom.mode.addEventListener('change', () => {
+    // Switching between adjusting and setting swaps which number is on screen.
+    applyActionVisibility();
+    save();
+});
 
 const $propEvent = {
     didReceiveGlobalSettings() { },
@@ -132,8 +181,6 @@ const $propEvent = {
 // happens after this script runs, so wait for it before asking for the targets.
 (function requestTargets(attempt = 0) {
     if ($websocket?.readyState === WebSocket.OPEN) {
-        // $action is known by now, so the step field can decide whether to show.
-        applyActionVisibility();
         $websocket.sendToPlugin({ type: 'getTargets' });
         return;
     }

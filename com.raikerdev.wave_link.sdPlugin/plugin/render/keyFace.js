@@ -316,6 +316,29 @@ function muteFace(target, iconPng) {
 }
 
 /**
+ * Face of a Volume Button: the target's level now, and what pressing will do to
+ * it. Same shape as the Volume Knob key face, with the operation spelled out at
+ * the bottom — on a key there is no dial to hint at it.
+ */
+function volumeButtonFace(target, iconPng, operation) {
+    const L = LAYOUTS.key;
+    const percent = Math.round(Math.min(1, Math.max(0, target.level)) * 100);
+    const muted = target.isMuted;
+    const hasIcon = Boolean(iconPng);
+
+    return `${open(L)}
+  ${iconTag(iconPng, 56, 10, 32)}
+  <text x="72" y="${hasIcon ? 62 : 44}" fill="${DIM}" font-family="sans-serif" font-size="16"
+        text-anchor="middle">${xml(shortLabel(target))}</text>
+  <text x="72" y="${hasIcon ? 98 : 88}" fill="${muted ? RED : TEXT}" font-family="sans-serif"
+        font-size="34" font-weight="bold" text-anchor="middle">${muted ? 'MUTE' : `${percent}%`}</text>
+  ${bar(20, L.w - 40, hasIcon ? 108 : 100, 6, muted ? 0 : percent / 100, muted ? RED : LEVEL)}
+  <text x="72" y="134" fill="${LEVEL}" font-family="sans-serif" font-size="19"
+        font-weight="bold" text-anchor="middle">${xml(operation)}</text>
+</svg>`;
+}
+
+/**
  * Splits a mix name over two lines so it fits a 144px key.
  * "Stream - Music" reads better stacked than clipped to "Stream - M…".
  */
@@ -432,4 +455,12 @@ function toDataUri(svg) {
     return `data:image/svg+xml;charset=utf8,${encodeURIComponent(svg)}`;
 }
 
-module.exports = { volumeFace, muteFace, outputMixFace, unconfiguredFace, calibrationFace, toDataUri };
+module.exports = {
+    volumeFace,
+    muteFace,
+    volumeButtonFace,
+    outputMixFace,
+    unconfiguredFace,
+    calibrationFace,
+    toDataUri
+};

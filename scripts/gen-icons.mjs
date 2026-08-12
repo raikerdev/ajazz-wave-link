@@ -191,6 +191,15 @@ const MUTE_ACTIVE = [
     [RED, (x, y) => capsule(x, y, 0.86, 0.36, 0.66, 0.64, 0.045)]
 ];
 
+/** Volume from a key: a chevron up over a chevron down. */
+const VOLUME_BUTTON = [
+    PLATE,
+    [TEAL, (x, y) => capsule(x, y, 0.30, 0.44, 0.50, 0.24, 0.042)],
+    [TEAL, (x, y) => capsule(x, y, 0.50, 0.24, 0.70, 0.44, 0.042)],
+    [WHITE, (x, y) => capsule(x, y, 0.30, 0.56, 0.50, 0.76, 0.042)],
+    [WHITE, (x, y) => capsule(x, y, 0.50, 0.76, 0.70, 0.56, 0.042)]
+];
+
 /** Routing: two arrows swapping direction, for sending an output to another mix. */
 const OUTPUT_MIX = [
     PLATE,
@@ -226,7 +235,8 @@ const ICONS = [
     ['knob', 72, KNOB],
     ['mute', 72, MUTE],
     ['mute-active', 72, MUTE_ACTIVE],
-    ['outputmix', 72, OUTPUT_MIX]
+    ['outputmix', 72, OUTPUT_MIX],
+    ['volumebutton', 72, VOLUME_BUTTON]
 ];
 
 for (const [name, size, layers] of ICONS) {

@@ -47,6 +47,20 @@ En su configuración podés elegir **cuánto sube o baja por click** (entre 1% y
 25%; por defecto 2%). Para ajustar un mix con precisión bajalo a 1%; para
 recorrer todo el rango rápido, subilo a 10%.
 
+### Volume Button
+
+Para botones, cuando no te quedan diales libres. En su configuración elegís qué
+hace al presionar:
+
+| Modo | Efecto |
+|---|---|
+| **Subir el volumen** | Sube un paso (5% por defecto) |
+| **Bajar el volumen** | Baja un paso |
+| **Fijar en un valor** | Salta al volumen que le pongas, de 0% a 100% |
+
+La tecla muestra el volumen actual y, abajo, qué va a hacer: `+ 5%`, `− 5%` o
+`→ 30%`.
+
 ### Mute Toggle
 
 Para botones. Alterna el mute del destino elegido. La tecla muestra el altavoz —
