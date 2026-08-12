@@ -55,6 +55,29 @@ function clamp01(value) {
 }
 
 /**
+ * An input's gain comes in the device's own range, not necessarily 0..1.
+ * Falls back to 0..1 when the bounds are missing or nonsensical.
+ */
+function gainRange(gain) {
+    const min = Number.isFinite(gain?.min) ? gain.min : 0;
+    const max = Number.isFinite(gain?.max) ? gain.max : 1;
+    return max > min ? { min, max } : { min: 0, max: 1 };
+}
+
+/** Device range → the 0..1 the rest of the plugin speaks in. */
+function normalizeGain(gain) {
+    const { min, max } = gainRange(gain);
+    const value = Number.isFinite(gain?.value) ? gain.value : min;
+    return clamp01((value - min) / (max - min));
+}
+
+/** 0..1 → the value the device expects back. */
+function denormalizeGain(gain, fraction) {
+    const { min, max } = gainRange(gain);
+    return min + clamp01(fraction) * (max - min);
+}
+
+/**
  * Folds a partial update into a list of things that have ids.
  *
  * Needed because `outputDeviceChanged` and `inputDeviceChanged` echo back **only
@@ -260,6 +283,20 @@ class WaveLinkClient extends EventEmitter {
         this.inputDevices = inputs.inputDevices;
         this.outputDevices = outputs.outputDevices;
         this.mixes = mixes.mixes;
+
+        // Every device seen so far reports an empty table and a plain 0..1 range.
+        // If one ever arrives populated, the mapping is probably a curve rather
+        // than the straight line assumed here, so say so instead of failing quietly.
+        for (const device of this.inputDevices) {
+            for (const input of device.inputs) {
+                const { min, max } = gainRange(input.gain);
+                if (input.gain?.lookUpTable?.length) {
+                    this.log.info(`wavelink: "${input.name}" has a gain lookUpTable; treating its range as linear`);
+                } else if (min !== 0 || max !== 1) {
+                    this.log.info(`wavelink: "${input.name}" reports gain in ${min}..${max}, mapping to 0..1`);
+                }
+            }
+        }
     }
 
     isReady() {
@@ -301,7 +338,8 @@ class WaveLinkClient extends EventEmitter {
                     targetType: 'input',
                     targetId: i.id,
                     targetName: d.name,
-                    level: i.gain.value,
+                    // Reported in the device's own range; everything else here is 0..1.
+                    level: normalizeGain(i.gain),
                     isMuted: i.isMuted
                 });
             }
@@ -440,9 +478,10 @@ class WaveLinkClient extends EventEmitter {
             }
             case 'input': {
                 const device = this.findInputDevice(targetId);
+                const input = device.inputs.find(i => i.id === targetId);
                 return this.call('setInputDevice', {
                     id: device.id,
-                    inputs: [{ id: targetId, gain: { value: clamped } }]
+                    inputs: [{ id: targetId, gain: { value: denormalizeGain(input.gain, clamped) } }]
                 });
             }
             case 'output': {

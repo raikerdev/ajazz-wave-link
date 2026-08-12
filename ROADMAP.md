@@ -254,13 +254,16 @@ ni omitir la clave funcionan — los dos se ignoran en silencio.
 
 ### Prioridad baja
 
-#### 9. Respetar el rango real de la ganancia
+#### 9. Respetar el rango real de la ganancia — ✅ HECHO (2026-08-12)
 
-`input.gain` trae `min`, `max` y una `lookUpTable`. Hoy asumimos 0..1 fijo. En
-esta máquina coincide, pero el hardware Wave de Elgato podría reportar otro rango
-y el dial quedaría descalibrado.
+Las entradas se convierten en los dos sentidos entre el rango que declara el
+dispositivo y el 0..1 que habla el resto del plugin. Ver
+[dev_doc.md](dev_doc.md#el-rango-de-la-ganancia).
 
-**Esfuerzo** bajo · **Riesgo** bajo.
+**Sin comprobar contra hardware real**: todas las entradas de esta máquina
+reportan 0..1, así que la conversión es la identidad. Se validó con un caso
+sintético en rango dB. Si aparece un dispositivo con otro rango, o con la
+`lookUpTable` cargada, queda anotado en el log.
 
 #### 10. Verificar la versión de Wave Link al conectar
 
