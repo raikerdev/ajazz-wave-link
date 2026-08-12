@@ -44,10 +44,28 @@ Se puede poner en un dial o en un botón.
 
 ### Mute Toggle
 
-Para botones. Alterna el mute del destino elegido, y el icono refleja el estado
-real: si mutás desde la interfaz de Wave Link, el botón se actualiza solo.
+Para botones. Alterna el mute del destino elegido. La tecla muestra el altavoz —
+blanco cuando suena, rojo y tachado cuando está muteado — más el nivel actual, y
+refleja el estado real: si mutás desde la interfaz de Wave Link, el botón se
+actualiza solo.
+
+### Output Mix
+
+Para botones. Cambia a qué mix escucha una salida: por ejemplo, mandar los
+auriculares del *Personal Mix* al *Stream - Music* para escuchar lo que sale al
+stream, sin abrir Wave Link.
+
+En su configuración elegís la **salida**, el **mix** al que mandarla y,
+opcionalmente, un **mix alternativo**. Si dejás el alternativo vacío, el botón
+siempre manda la salida al mix elegido. Si lo completás, alterna entre los dos.
+
+La tecla muestra el mix que está alimentando la salida en este momento —en verde
+cuando coincide con el que configuraste— y abajo, a cuál va a ir si la presionás.
 
 ## Configuración
+
+*Output Mix* tiene su propia pantalla, descrita arriba. *Volume Knob* y
+*Mute Toggle* comparten esta:
 
 Arrastrá la acción a un dial o botón y abrí su configuración. Hay dos listas
 desplegables:

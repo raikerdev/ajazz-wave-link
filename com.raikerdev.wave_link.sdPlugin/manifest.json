@@ -50,6 +50,32 @@
       "UserTitleEnabled": true,
       "SupportedInMultiActions": true,
       "PropertyInspectorPath": "propertyInspector/target/index.html"
+    },
+    {
+      "UUID": "com.raikerdev.wave_link.outputmix",
+      "Name": "Output Mix",
+      "Tooltip": "Cambia a que mix escucha una salida. Con un mix alternativo configurado, alterna entre los dos.",
+      "Icon": "static/outputmix.png",
+      "DisableAutomaticStates": true,
+      "States": [
+        {
+          "Image": "static/outputmix.png",
+          "TitleAlignment": "center",
+          "FontSize": "10"
+        }
+      ],
+      "Settings": {
+        "outputId": "",
+        "outputName": "",
+        "mixId": "",
+        "mixName": "",
+        "altMixId": "",
+        "altMixName": ""
+      },
+      "Controllers": ["Keypad"],
+      "UserTitleEnabled": true,
+      "SupportedInMultiActions": true,
+      "PropertyInspectorPath": "propertyInspector/outputmix/index.html"
     }
   ],
   "SDKVersion": 1,

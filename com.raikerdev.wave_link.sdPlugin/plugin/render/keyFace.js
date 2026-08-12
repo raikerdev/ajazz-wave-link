@@ -316,6 +316,49 @@ function muteFace(target, iconPng) {
 }
 
 /**
+ * Splits a mix name over two lines so it fits a 144px key.
+ * "Stream - Music" reads better stacked than clipped to "Stream - M…".
+ */
+function splitMixName(name) {
+    const clean = String(name || '').trim();
+    if (!clean) return ['Sin mix'];
+    const dash = clean.indexOf(' - ');
+    if (dash >= 0) return [clean.slice(0, dash), clean.slice(dash + 3)];
+    const space = clean.lastIndexOf(' ');
+    if (space > 0 && clean.length > 10) return [clean.slice(0, space), clean.slice(space + 1)];
+    return [clean];
+}
+
+/**
+ * Face of an Output Mix key: which output, which mix is feeding it right now,
+ * and what pressing will switch it to.
+ *
+ * Output devices carry no artwork in Wave Link, so there is no icon to lean on —
+ * the current mix is the thing that has to read at a glance.
+ */
+function outputMixFace({ outputName, currentMixName, nextMixName, onTarget }) {
+    const L = LAYOUTS.key;
+    const lines = splitMixName(currentMixName);
+    const accent = onTarget ? LEVEL : TEXT;
+    const firstY = lines.length > 1 ? 64 : 76;
+
+    const body = lines
+        .map((line, i) => `<text x="72" y="${firstY + i * 26}" fill="${accent}" font-family="sans-serif"
+        font-size="23" font-weight="bold" text-anchor="middle">${xml(clip(line, 12))}</text>`)
+        .join('\n  ');
+
+    return `${open(L)}
+  <text x="72" y="28" fill="${SCOPE}" font-family="sans-serif" font-size="15"
+        text-anchor="middle">${xml(clip(stripModel(outputName), 15))}</text>
+  ${body}
+  ${nextMixName
+        ? `<text x="72" y="126" fill="${DIM}" font-family="sans-serif" font-size="15"
+        text-anchor="middle">→ ${xml(clip(nextMixName, 13))}</text>`
+        : ''}
+</svg>`;
+}
+
+/**
  * @param {object} target    the live Wave Link target, with `level` and `isMuted`
  * @param {string} [iconPng] base64 PNG for the channel, when Wave Link has one
  * @param {'key'|'dial'} [surface] where it will be shown
@@ -389,4 +432,4 @@ function toDataUri(svg) {
     return `data:image/svg+xml;charset=utf8,${encodeURIComponent(svg)}`;
 }
 
-module.exports = { volumeFace, muteFace, unconfiguredFace, calibrationFace, toDataUri };
+module.exports = { volumeFace, muteFace, outputMixFace, unconfiguredFace, calibrationFace, toDataUri };

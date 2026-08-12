@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Wave Link Control - Output Mix</title>
+    <link href="../utils/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <div class="sdpi-wrapper">
+        <div class="mb-1">
+            <label class="form-label" for="outputSelect">Salida</label>
+            <select class="form-select" id="outputSelect">
+                <option value="">Selecciona una salida...</option>
+            </select>
+        </div>
+
+        <div class="mb-1">
+            <label class="form-label" for="mixSelect">Mix</label>
+            <select class="form-select" id="mixSelect">
+                <option value="">Selecciona un mix...</option>
+            </select>
+        </div>
+
+        <div class="mb-1">
+            <label class="form-label" for="altMixSelect">Mix alternativo</label>
+            <select class="form-select" id="altMixSelect">
+                <option value="">(ninguno)</option>
+            </select>
+        </div>
+
+        <div id="status" class="status">Conectando...</div>
+    </div>
+
+    <script src="../utils/common.js"></script>
+    <script src="../utils/action.js"></script>
+    <script src="index.js"></script>
+</body>
+
+<style>
+    body {
+        font-family: sans-serif;
+        padding: 8px;
+        background-color: #2d2d2d;
+        color: #fff;
+    }
+
+    /* Same house style as the other inspector; see propertyInspector/target. */
+    .form-label {
+        color: #ffffff;
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+
+    .form-select {
+        color: #dee2e6;
+        background-color: #3d3d3d;
+        border-color: #4a4a4a;
+        border-radius: 4px;
+        font-size: 12px;
+        padding: 5px 10px;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 16'%3e%3cpath fill='none' stroke='%23dee2e6' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    }
+
+    .form-select:focus {
+        color: #dee2e6;
+        background-color: #3d3d3d;
+        border-color: #7a7a7a;
+        border-width: 1px;
+        box-shadow: none;
+    }
+
+    .status {
+        font-size: .75rem;
+        color: rgba(222, 226, 230, .75);
+    }
+
+    .status.error {
+        color: #ea868f;
+    }
+
+    ::-webkit-scrollbar {
+        display: none;
+    }
+</style>
+
+</html>

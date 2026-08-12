@@ -453,6 +453,33 @@ class WaveLinkClient extends EventEmitter {
         }
     }
 
+    /**
+     * Which mix an output device is fed by, or undefined when it is fed by none.
+     * An unassigned output is a real state in Wave Link, not an error.
+     */
+    getOutputMix(outputId) {
+        for (const device of this.outputDevices) {
+            const output = device.outputs.find(o => o.id === outputId);
+            if (output) return output.mixId || undefined;
+        }
+        return undefined;
+    }
+
+    /**
+     * Points an output at a different mix — the routing the official plugin calls
+     * Mix Output Device.
+     *
+     * To *unassign* an output, pass an empty string. Verified against the live
+     * instance: `null` is ignored and omitting the key entirely is ignored too,
+     * so only `''` actually clears it.
+     */
+    async setOutputMix(outputId, mixId) {
+        const device = this.findOutputDevice(outputId);
+        return this.call('setOutputDevice', {
+            outputDevice: { id: device.id, outputs: [{ id: outputId, mixId }] }
+        });
+    }
+
     /** Inputs and outputs are addressed through their parent device, so it has to be looked up. */
     findInputDevice(inputId) {
         const device = this.inputDevices.find(d => d.inputs.some(i => i.id === inputId));

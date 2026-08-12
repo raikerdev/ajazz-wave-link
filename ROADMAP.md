@@ -56,7 +56,7 @@ Nueve acciones, contra las dos de acá:
 | **Mix Level** — volumen y mute de un mix completo | ✅ Es nuestro `mix` |
 | **Output Control** — volumen y mute de una salida | ✅ Es nuestro `output` |
 | **Wave Control** — ganancia y mezcla de monitoreo del hardware Wave | 🟡 Nuestro `input` cubre la ganancia de entrada, y además funciona con micrófonos que no son Elgato. No cubre la mezcla de monitoreo |
-| **Mix Output Device** — cambiar a qué mix alimenta una salida | ❌ |
+| **Mix Output Device** — cambiar a qué mix alimenta una salida | ✅ Es nuestra acción `Output Mix` |
 | **Main Output Device** — cambiar la salida principal | ❌ |
 | **Audio Effect** — efectos del hardware Wave (supresión de ruido, EQ, compresión, Clipguard) | ❌ |
 | **Channel Audio Effect** — efectos VST/AU por canal | ❌ |
@@ -234,18 +234,20 @@ ya disponible, eso es un bucle de unos pocos pasos.
 
 **Esfuerzo** medio · **Riesgo** bajo.
 
-#### 8. Acción "Cambiar el mix de una salida"
+#### 8. Acción "Cambiar el mix de una salida" — ✅ HECHO (2026-08-11)
 
-Equivale al *Mix Output Device* del oficial: mandar los auriculares del *Personal
-Mix* al *Stream Mix* con un botón, para escuchar lo que sale al stream sin tocar
-la aplicación.
+Equivale al *Mix Output Device* del oficial. Acción `Output Mix`, con su propia
+pantalla de configuración (salida + mix + mix alternativo opcional). Sin
+alternativo manda la salida al mix elegido; con alternativo alterna entre los
+dos. La tecla muestra el mix que está alimentando la salida ahora y a cuál va a
+ir si la presionás.
 
-**Es construible ya**: cada salida trae su `mixId` (verificado), y se escribe con
-el mismo `setOutputDevice` que ya usamos. Solo falta una acción nueva y un
-desplegable de mix en la pantalla de configuración.
+Verificado contra la instancia real: tres pulsaciones dan A → B → A, y Wave Link
+emite `outputDeviceChanged`, así que la tecla se repinta sola si cambiás el
+enrutamiento desde la aplicación.
 
-**Esfuerzo** bajo · **Riesgo** bajo. Es la función del oficial que más barato nos
-sale copiar.
+**Hallazgo**: para *desasignar* una salida hay que mandar `mixId: ''`. Ni `null`
+ni omitir la clave funcionan — los dos se ignoran en silencio.
 
 ### Prioridad baja
 

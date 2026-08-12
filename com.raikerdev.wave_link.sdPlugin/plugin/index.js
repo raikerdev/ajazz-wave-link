@@ -122,6 +122,50 @@ function paintVolumeKnob(context, settings) {
     plugin.setImage(context, render.toDataUri(render.volumeFace(target, icon, surface)));
 }
 
+/**
+ * Works out what an Output Mix key is looking at and what pressing it will do.
+ *
+ * With only a primary mix the key is a plain "send it there". With an alternate
+ * as well it flips between the two, which is the point: one key to move the
+ * headphones between what you monitor and what goes out to the stream.
+ */
+function resolveOutputMix(settings) {
+    const { outputId, mixId, mixName, altMixId, altMixName } = settings || {};
+    if (!outputId || !mixId) return undefined;
+
+    const output = wavelink.getTarget('output', outputId);
+    if (!output) return undefined;
+
+    const currentMixId = wavelink.getOutputMix(outputId);
+    const onTarget = currentMixId === mixId;
+    const currentMix = currentMixId ? wavelink.getTarget('mix', currentMixId) : undefined;
+
+    // Pressing goes to the alternate only when we are already sitting on the primary.
+    const nextId = altMixId && onTarget ? altMixId : mixId;
+    const nextName = altMixId && onTarget ? altMixName : mixName;
+
+    return {
+        outputName: output.targetName,
+        currentMixName: currentMix?.targetName || '',
+        nextMixId: nextId,
+        nextMixName: nextId === currentMixId ? '' : nextName,
+        onTarget
+    };
+}
+
+/** Draws an Output Mix key: the output, the mix feeding it, and where it will go. */
+function paintOutputMix(context, settings) {
+    const state = resolveOutputMix(settings);
+    if (!state) {
+        const why = !settings?.outputId || !settings?.mixId
+            ? 'Sin destino'
+            : (wavelink.isReady() ? 'No existe' : 'Sin conexión');
+        plugin.setImage(context, render.toDataUri(render.unconfiguredFace(why)));
+        return;
+    }
+    plugin.setImage(context, render.toDataUri(render.outputMixFace(state)));
+}
+
 let repaintTimer = null;
 let repaintQueued = false;
 
@@ -135,6 +179,11 @@ function repaintAll() {
     if (plugin.mutetoggle) {
         for (const [context, settings] of Object.entries(plugin.mutetoggle.data)) {
             paintMuteToggle(context, settings);
+        }
+    }
+    if (plugin.outputmix) {
+        for (const [context, settings] of Object.entries(plugin.outputmix.data)) {
+            paintOutputMix(context, settings);
         }
     }
 }
@@ -278,5 +327,34 @@ plugin.mutetoggle = new Actions({
         await toggleMute(this, event);
         // Wave Link echoes the change back as a notification, which repaints the
         // face through requestRepaint — no optimistic painting needed here.
+    }
+});
+
+plugin.outputmix = new Actions({
+    ...targetActionBase(),
+    default: { outputId: '', outputName: '', mixId: '', mixName: '', altMixId: '', altMixName: '' },
+
+    _willAppear({ context, payload }) {
+        paintOutputMix(context, payload?.settings);
+    },
+
+    _didReceiveSettings({ context, payload }) {
+        paintOutputMix(context, payload?.settings);
+    },
+
+    keyUp(event) {
+        const { context, payload } = event;
+        const settings = payload?.settings || this.data[context];
+        const state = resolveOutputMix(settings);
+
+        if (!state) {
+            reportUnavailable(context);
+            return;
+        }
+
+        wavelink.setOutputMix(settings.outputId, state.nextMixId).catch(err => {
+            log.error(`setOutputMix failed for ${state.outputName}: ${err.message}`);
+            plugin.showAlert(context);
+        });
     }
 });

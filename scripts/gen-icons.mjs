@@ -191,6 +191,19 @@ const MUTE_ACTIVE = [
     [RED, (x, y) => capsule(x, y, 0.86, 0.36, 0.66, 0.64, 0.045)]
 ];
 
+/** Routing: two arrows swapping direction, for sending an output to another mix. */
+const OUTPUT_MIX = [
+    PLATE,
+    // Upper arrow, pointing right.
+    [TEAL, (x, y) => capsule(x, y, 0.22, 0.38, 0.74, 0.38, 0.038)],
+    [TEAL, (x, y) => capsule(x, y, 0.66, 0.30, 0.76, 0.38, 0.038)],
+    [TEAL, (x, y) => capsule(x, y, 0.66, 0.46, 0.76, 0.38, 0.038)],
+    // Lower arrow, pointing left.
+    [WHITE, (x, y) => capsule(x, y, 0.26, 0.62, 0.78, 0.62, 0.038)],
+    [WHITE, (x, y) => capsule(x, y, 0.34, 0.54, 0.24, 0.62, 0.038)],
+    [WHITE, (x, y) => capsule(x, y, 0.34, 0.70, 0.24, 0.62, 0.038)]
+];
+
 /** Plugin and category badge: a mixer with three faders at different levels. */
 const BADGE = [
     [SLATE, (x, y) => roundedRect(x, y, 0.06, 0.06, 0.94, 0.94, 0.22)],
@@ -212,7 +225,8 @@ const ICONS = [
     ['category', 48, BADGE],
     ['knob', 72, KNOB],
     ['mute', 72, MUTE],
-    ['mute-active', 72, MUTE_ACTIVE]
+    ['mute-active', 72, MUTE_ACTIVE],
+    ['outputmix', 72, OUTPUT_MIX]
 ];
 
 for (const [name, size, layers] of ICONS) {
