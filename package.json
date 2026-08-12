@@ -11,6 +11,9 @@
     "install-plugin": "npm run build",
     "dev:on": "node scripts/dev-mode.mjs on",
     "dev:calibrate": "node scripts/dev-mode.mjs calibrate",
-    "dev:off": "node scripts/dev-mode.mjs off"
+    "dev:off": "node scripts/dev-mode.mjs off",
+    "probe": "node scripts/wavelink-probe.mjs",
+    "pi": "node scripts/pi-harness.mjs",
+    "faces": "node scripts/face-preview.mjs"
   }
 }

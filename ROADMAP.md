@@ -28,9 +28,8 @@ el dispositivo real. Detalles de implementación en [dev_doc.md](dev_doc.md).
 - **La proporción real del panel del dial sigue sin medirse.** Se dibuja en 200×100
   porque los paneles del plugin oficial dan ~2:1, pero nunca se confirmó con el
   aparato (`npm run dev:calibrate` está para eso).
-- **Los arneses de diagnóstico no están todos versionados.** La recarga en vivo sí
-  (`scripts/dev-mode.mjs`), pero el probe de Wave Link y el arnés de la pantalla
-  de configuración hay que reescribirlos cada vez.
+- **Sigue sin haber tests automatizados.** Las herramientas de `scripts/` hacen
+  fácil verificar a mano, pero nada corre solo ni detecta una regresión.
 - **`getTarget()` reconstruye la lista entera** (21 objetos hoy) en cada consulta,
   y se consulta una vez por tecla en cada notificación de Wave Link.
 - **Solo Windows.** La ruta del `ws-info.json` es de Windows y el manifest no
@@ -194,22 +193,20 @@ La [receta 2 de dev_doc.md](dev_doc.md#receta-2--agregar-un-ajuste-nuevo) quedó
 reescrita como recorrido de este código real, para usarla de plantilla la próxima
 vez.
 
-#### 5. Guardar los arneses de diagnóstico como scripts del repo — 🟡 PARCIAL
+#### 5. Guardar los arneses de diagnóstico como scripts del repo — ✅ HECHO (2026-08-12)
 
-**Hecho (2026-08-11)**: `scripts/dev-mode.mjs` + `plugin/dev/devMode.js`, la
-recarga en vivo del renderer contra el dispositivo real, con patrón de
-calibración incluido. Ver [dev_doc.md](dev_doc.md#iterar-sobre-el-diseño-de-la-tecla-en-vivo).
+Cuatro herramientas versionadas, todas usables con el Stream Dock cerrado. Ver
+[dev_doc.md](dev_doc.md#diagnóstico).
 
-**Falta** convertir en archivos permanentes las otras dos herramientas, que hoy
-se reescriben en la carpeta temporal cada vez que hacen falta:
+| script | para qué |
+|---|---|
+| `npm run probe` | Los destinos de Wave Link, sus estructuras crudas (`--raw`) o sus notificaciones en vivo (`--watch`) |
+| `npm run pi` | La pantalla de configuración en un navegador, con datos reales y autoconectada |
+| `npm run faces` | Todas las caras de todas las acciones, releídas en cada refresh |
+| `npm run dev:on` | Lo mismo pero **en el dispositivo**, recargando al guardar |
 
-- `scripts/wavelink-probe.mjs` — conecta a Wave Link e imprime los destinos con
-  su nivel y su mute. Sirve para ver qué ve el plugin sin abrir la aplicación.
-- `scripts/pi-harness.mjs` — sirve la pantalla de configuración por HTTP y simula
-  al host por WebSocket. Permite trabajar en la interfaz sin reinstalar ni tocar
-  el dispositivo.
-
-**Esfuerzo** bajo · **Riesgo** ninguno.
+Motivo para hacerlo: se habían escrito siete scripts descartables en carpetas
+temporales a lo largo del proyecto, reinventando lo mismo cada vez.
 
 #### 6. Ajuste fino apretando el dial — ✅ HECHO (2026-08-12)
 

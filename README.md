@@ -136,8 +136,23 @@ com.raikerdev.wave_link.sdPlugin/   El plugin
   plugin/                           Proceso Node que habla con Wave Link
   propertyInspector/                Pantalla de configuración
   static/                           Iconos
-scripts/gen-icons.mjs               Genera los iconos (npm run icons)
+scripts/                            Herramientas de desarrollo
 ```
+
+Casi todo se puede probar con el Stream Dock cerrado:
+
+```bash
+npm run probe
+```
+
+| Comando | Qué hace |
+|---|---|
+| `npm run probe` | Muestra lo que Wave Link está informando: canales, mixes, entradas y salidas |
+| `npm run pi` | Abre la pantalla de configuración en el navegador, con datos reales |
+| `npm run faces` | Muestra cómo quedan todas las teclas, sin necesitar el aparato |
+| `npm run dev:on` | Editás el dibujo de las teclas y se actualiza en el aparato al guardar |
+| `npm run dev:off` | Apaga lo anterior |
+| `npm run icons` | Regenera los iconos |
 
 Construido sobre el template `SDNodeJsSDKV2` del
 [SDK oficial de StreamDock](https://github.com/MiraboxSpace/StreamDock-Plugin-SDK).
