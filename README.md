@@ -9,6 +9,9 @@ One dial per channel: turn it and the fader moves in Wave Link, press it and the
 channel mutes. It reaches everything Wave Link exposes — channels, a single
 channel's cell inside a mix, inputs, outputs and whole mixes.
 
+It follows the Stream Dock app's language: **English**, **Spanish** and
+**Simplified Chinese** (简体中文). Any other language reads English.
+
 ## Requirements
 
 - Windows 10 or later
@@ -163,7 +166,8 @@ npm run probe
 | `npm run faces` | Renders every key face, no device needed |
 | `npm run dev:on` | Edit the key artwork and it redraws on the device as you save |
 | `npm run dev:off` | Turns that back off |
-| `npm run icons` | Regenerates the icons |
+| `npm run icons` | Regenerates the icons, and the store avatar |
+| `npm run store` | Redraws the store listing images (`-- --lang=all` for English and Chinese) |
 | `npm run package` | Builds the distributable zip into `dist/` |
 
 Built on the `SDNodeJsSDKV2` template from the

@@ -343,12 +343,15 @@ el recorrido del SDK (`$local = true`), y lo que se arma en runtime por una
 función `t()` que **cae al inglés** en vez de a `undefined`. Ver
 [dev_doc.md](dev_doc.md#idiomas).
 
-`en.json` y `es.json` con 36 claves cada uno. Verificado en las dos pantallas, en
-los dos idiomas y con un idioma sin archivo (`fr`), que cae a inglés limpio.
+`en.json`, `es.json` y `zh_CN.json` con 46 claves cada uno. Verificado en las tres
+pantallas, en los tres idiomas y con un idioma sin archivo (`fr`), que cae a
+inglés limpio.
 
 **No agregar archivos de idioma con el bloque `Localization` vacío**: el recorrido
 del SDK los tomaría como válidos y dejaría la pantalla llena de `undefined`. Es
-mejor no tener el archivo.
+mejor no tener el archivo. Desde 2026-08-12 `npm run package` lo verifica: compara
+las claves de cada archivo de idioma contra `en.json` y falla si falta alguna.
+Cómo se agrega un idioma está en [dev_doc.md](dev_doc.md#agregar-un-idioma).
 
 ## Lo que conviene no hacer
 

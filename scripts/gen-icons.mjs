@@ -106,8 +106,24 @@ function soundWave(x, y, radius) {
 const WHITE = [255, 255, 255];
 const TEAL = [45, 190, 185];
 const RED = [226, 78, 78];
-const SLATE = [88, 106, 220];
 const DARK = [38, 40, 46];
+
+/** The two ends of the brand plate's gradient. */
+const INDIGO = [82, 96, 236];
+const DEEP = [30, 36, 108];
+
+/**
+ * A linear gradient between two colours, as a colour function.
+ * `t` runs 0..1 down the diagonal, which reads as light coming from the top-left.
+ */
+function gradient(from, to) {
+    return (x, y) => {
+        const t = Math.min(1, Math.max(0, (x + y) / 2));
+        return [from[0] + (to[0] - from[0]) * t,
+            from[1] + (to[1] - from[1]) * t,
+            from[2] + (to[2] - from[2]) * t];
+    };
+}
 
 /** Standard source-over compositing, with both colours premultiplied on the fly. */
 function over(dst, src, srcAlpha) {
@@ -136,7 +152,10 @@ function render(size, layers, samples = 4) {
                     const y = (py + (sy + 0.5) / samples) / size;
                     let sample = [0, 0, 0, 0];
                     for (const [colour, inside, alpha = 1] of layers) {
-                        if (inside(x, y)) sample = over(sample, colour, alpha);
+                        // A colour may be a function of position, which is how gradients work.
+                        if (inside(x, y)) {
+                            sample = over(sample, typeof colour === 'function' ? colour(x, y) : colour, alpha);
+                        }
                     }
                     r += sample[0] * sample[3];
                     g += sample[1] * sample[3];
@@ -223,16 +242,40 @@ const OUTPUT_MIX = [
     [WHITE, (x, y) => capsule(x, y, 0.34, 0.70, 0.24, 0.62, 0.038)]
 ];
 
-/** Plugin and category badge: a mixer with three faders at different levels. */
-const BADGE = [
-    [SLATE, (x, y) => roundedRect(x, y, 0.06, 0.06, 0.94, 0.94, 0.22)],
-    [WHITE, (x, y) => capsule(x, y, 0.30, 0.24, 0.30, 0.76, 0.035), 0.45],
-    [WHITE, (x, y) => capsule(x, y, 0.50, 0.24, 0.50, 0.76, 0.035), 0.45],
-    [WHITE, (x, y) => capsule(x, y, 0.70, 0.24, 0.70, 0.76, 0.035), 0.45],
-    [WHITE, (x, y) => roundedRect(x, y, 0.22, 0.56, 0.38, 0.66, 0.05)],
-    [WHITE, (x, y) => roundedRect(x, y, 0.42, 0.32, 0.58, 0.42, 0.05)],
-    [WHITE, (x, y) => roundedRect(x, y, 0.62, 0.46, 0.78, 0.56, 0.05)]
-];
+/**
+ * The brand mark: three faders set to different levels on a gradient plate.
+ *
+ * Drawn from the same primitives as everything else, so the one design serves
+ * three sizes at once — 48px for the category, 128px for the plugin and 480px
+ * for the store avatar — with no separate artwork to keep in step.
+ *
+ * The track below each cap lights up teal, which is the same "this is the level"
+ * language the key faces speak. Anything more detailed disappears at 48px.
+ *
+ * @param {number} inset margin around the plate; the app's action list needs the
+ *                       breathing room, the store avatar wants the frame filled
+ */
+function mark({ inset = 0.06, radius = 0.22 } = {}) {
+    const CAPS = [[0.30, 0.61], [0.50, 0.37], [0.70, 0.51]];
+    const TOP = 0.24;
+    const BOTTOM = 0.76;
+    const layers = [
+        [gradient(INDIGO, DEEP), (x, y) => roundedRect(x, y, inset, inset, 1 - inset, 1 - inset, radius)]
+    ];
+
+    for (const [cx] of CAPS) {
+        layers.push([WHITE, (x, y) => capsule(x, y, cx, TOP, cx, BOTTOM, 0.032), 0.35]);
+    }
+    for (const [cx, cy] of CAPS) {
+        layers.push([TEAL, (x, y) => capsule(x, y, cx, cy, cx, BOTTOM, 0.032)]);
+    }
+    for (const [cx, cy] of CAPS) {
+        layers.push([WHITE, (x, y) => roundedRect(x, y, cx - 0.085, cy - 0.055, cx + 0.085, cy + 0.055, 0.05)]);
+    }
+    return layers;
+}
+
+const BADGE = mark();
 
 const outDir = 'com.raikerdev.wave_link.sdPlugin/static';
 mkdirSync(outDir, { recursive: true });
@@ -257,3 +300,18 @@ for (const [name, size, layers] of ICONS) {
 }
 
 console.log(`\nIconos escritos en ${outDir}`);
+
+// ---------------------------------------------------------------------------
+// El avatar de la tienda
+// ---------------------------------------------------------------------------
+// La ficha de AJAZZ pide 480x480. Es la misma marca que el icono del plugin, sin
+// el margen: ahi es un avatar y conviene que llene el cuadro.
+const STORE_DIR = 'store';
+const AVATAR_SIZE = 480;
+
+mkdirSync(STORE_DIR, { recursive: true });
+writeFileSync(
+    join(STORE_DIR, 'product-avatar.png'),
+    encodePng(AVATAR_SIZE, render(AVATAR_SIZE, mark({ inset: 0, radius: 0.24 })))
+);
+console.log(`product-avatar.png (${AVATAR_SIZE}px) en ${STORE_DIR}/`);

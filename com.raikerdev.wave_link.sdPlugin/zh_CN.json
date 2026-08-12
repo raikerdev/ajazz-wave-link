@@ -1,0 +1,73 @@
+{
+  "Name": "Wave Link Control",
+  "Description": "通过 Stream Dock 的旋钮和按键控制 Elgato Wave Link 3 的通道、输入设备、输出设备和混音的音量与静音。",
+  "Category": "Wave Link",
+  "com.raikerdev.wave_link.volumeknob": {
+    "Name": "音量旋钮",
+    "Tooltip": "旋转旋钮调节音量，按下切换静音。在设置中选择通道、输入设备、输出设备或混音。"
+  },
+  "com.raikerdev.wave_link.mutetoggle": {
+    "Name": "静音开关",
+    "Tooltip": "按下切换静音。在设置中选择通道、输入设备、输出设备或混音。"
+  },
+  "com.raikerdev.wave_link.volumebutton": {
+    "Name": "音量按键",
+    "Tooltip": "无需旋钮，直接用按键调高、调低或设定音量。"
+  },
+  "com.raikerdev.wave_link.audioeffect": {
+    "Name": "音频效果",
+    "Tooltip": "开启或关闭 Wave Link 通道上加载的 VST/AU 效果。"
+  },
+  "com.raikerdev.wave_link.outputmix": {
+    "Name": "输出混音",
+    "Tooltip": "切换输出设备所监听的混音。设定备用混音后，按键会在两者之间来回切换。"
+  },
+  "Localization": {
+    "Channel": "通道",
+    "Effect": "效果",
+    "Select a channel...": "选择通道...",
+    "Select a channel first...": "请先选择通道...",
+    "Select an effect...": "选择效果...",
+    "(no channel has effects)": "(没有通道加载了效果)",
+    "Pick a channel and an effect.": "请选择一个通道和一个效果。",
+    "Pick an effect to finish setting this up.": "选择一个效果即可完成设置。",
+    "Toggles \"{effect}\" on {channel}.": "开关 {channel} 上的“{effect}”。",
+    "No effects loaded. Add one to a channel in Wave Link first.": "尚未加载任何效果。请先在 Wave Link 中为通道添加效果。",
+    "Type": "类型",
+    "Select a type...": "选择类型...",
+    "Channel (master)": "通道（主音量）",
+    "Channel within a Mix": "混音中的通道",
+    "Input": "输入设备",
+    "Output": "输出设备",
+    "Mix (master)": "混音（主音量）",
+    "Target": "目标",
+    "Select a type first...": "请先选择类型...",
+    "Select a target...": "选择目标...",
+    "(nothing of this type)": "(没有此类型的目标)",
+    "On press": "按下时",
+    "Turn the volume up": "调高音量",
+    "Turn the volume down": "调低音量",
+    "Set to a value": "设为指定值",
+    "Step (%)": "步进 (%)",
+    "Step per click (%)": "每格步进 (%)",
+    "Volume (%)": "音量 (%)",
+    "Mix": "混音",
+    "Alternate mix": "备用混音",
+    "Select an output...": "选择输出设备...",
+    "Select a mix...": "选择混音...",
+    "(none)": "(无)",
+    "(no outputs)": "(没有输出设备)",
+    "the output": "该输出设备",
+    "Connecting...": "正在连接...",
+    "Saved: {name}": "已保存：{name}",
+    "Controlling: {name}": "正在控制：{name}",
+    "{count} targets available.": "有 {count} 个可用目标。",
+    "Pick a target to finish setting this up.": "选择一个目标即可完成设置。",
+    "Pick a type and a target.": "请选择类型和目标。",
+    "Pick an output and a mix.": "请选择输出设备和混音。",
+    "Sends {output} to \"{mix}\".": "将{output}发送到“{mix}”。",
+    "Flips {output} between \"{a}\" and \"{b}\".": "让{output}在“{a}”和“{b}”之间切换。",
+    "Wave Link is not connected. Open it, then reopen this panel.": "未连接到 Wave Link。请打开 Wave Link，然后重新打开此面板。",
+    "Could not reach the plugin.": "无法连接到插件。"
+  }
+}

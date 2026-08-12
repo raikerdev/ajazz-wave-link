@@ -30,9 +30,17 @@ const SHIPS = [
     'manifest.json',
     'en.json',
     'es.json',
+    'zh_CN.json',
     'propertyInspector',
     'static'
 ];
+
+/**
+ * Language file names, as the host spells them: `en.json`, `zh_CN.json`.
+ * Used to check that every one on disk is also in `SHIPS` — an allowlist can
+ * forget a new language, and a missing file is silent at runtime.
+ */
+const LANGUAGE_FILE = /^[a-z]{2}(_[A-Z]{2})?\.json$/;
 
 /** The bundled entry point, which replaces the sources under `plugin/`. */
 const BUNDLE = join(SOURCE, 'plugin', 'build', 'index.js');
@@ -109,6 +117,29 @@ for (const action of manifest.Actions) {
     }
 }
 if (!existsSync(join(STAGING, manifest.CodePathWin))) problems.push(`falta ${manifest.CodePathWin}`);
+
+// Los idiomas: que no falte ninguno, y que ninguno tenga huecos. Una clave que
+// falta no rompe nada visible al empaquetar — se ve recien en la pantalla de
+// configuracion, escrita como "undefined".
+const languages = readdirSync(SOURCE).filter(name => LANGUAGE_FILE.test(name));
+const english = JSON.parse(readFileSync(join(SOURCE, 'en.json'), 'utf-8'));
+const expected = Object.keys(english.Localization);
+
+for (const name of languages) {
+    if (!SHIPS.includes(name)) {
+        problems.push(`el idioma ${name} existe pero no esta en la lista de envio`);
+        continue;
+    }
+    const file = JSON.parse(readFileSync(join(STAGING, name), 'utf-8'));
+    const keys = Object.keys(file.Localization || {});
+    const missing = expected.filter(key => !keys.includes(key));
+    const extra = keys.filter(key => !expected.includes(key));
+    if (missing.length) problems.push(`${name}: faltan ${missing.length} claves (${missing[0]}...)`);
+    if (extra.length) problems.push(`${name}: sobran ${extra.length} claves (${extra[0]}...)`);
+    for (const action of manifest.Actions) {
+        if (!file[action.UUID]?.Name) problems.push(`${name}: falta el nombre de ${action.Name}`);
+    }
+}
 
 if (problems.length) {
     console.error('\nEl paquete tiene problemas:');

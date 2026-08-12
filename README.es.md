@@ -9,6 +9,9 @@ Un dial por canal: girás y el fader se mueve en Wave Link; lo apretás y se
 mutea. Funciona con todo lo que Wave Link expone — canales, la celda de un canal
 dentro de un mix, entradas, salidas y mixes completos.
 
+Sigue el idioma de la aplicación Stream Dock: **inglés**, **español** y **chino
+simplificado** (简体中文). Cualquier otro idioma se ve en inglés.
+
 ## Requisitos
 
 - Windows 10 o superior
@@ -164,7 +167,8 @@ npm run probe
 | `npm run faces` | Muestra cómo quedan todas las teclas, sin necesitar el aparato |
 | `npm run dev:on` | Editás el dibujo de las teclas y se actualiza en el aparato al guardar |
 | `npm run dev:off` | Apaga lo anterior |
-| `npm run icons` | Regenera los iconos |
+| `npm run icons` | Regenera los iconos y el avatar de la tienda |
+| `npm run store` | Redibuja las imágenes de la ficha de la tienda (`-- --lang=all` para inglés y chino) |
 | `npm run package` | Arma el zip distribuible en `dist/` |
 
 Construido sobre el template `SDNodeJsSDKV2` del

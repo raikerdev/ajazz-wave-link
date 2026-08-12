@@ -7,6 +7,7 @@
   "scripts": {
     "deps": "cd com.raikerdev.wave_link.sdPlugin/plugin && npm install",
     "icons": "node scripts/gen-icons.mjs",
+    "store": "node scripts/gen-store-images.mjs",
     "build": "cd com.raikerdev.wave_link.sdPlugin/plugin && npm run build",
     "install-plugin": "npm run build",
     "package": "node scripts/package.mjs",

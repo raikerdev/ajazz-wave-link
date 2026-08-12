@@ -1,7 +1,7 @@
 const { Plugins, Actions, log } = require('./utils/plugin');
 const { WaveLinkClient } = require('./wavelink/client');
 const devMode = require('./dev/devMode');
-const { t } = require('./i18n');
+const { t, language, translated } = require('./i18n');
 
 /**
  * The artwork module. Normally the bundled one; with a `dev.json` present it is
@@ -353,6 +353,10 @@ wavelink.on('changed', requestRepaint);
 
 // Nothing can be read while disconnected, so the keys say so instead of lying.
 wavelink.on('disconnected', requestRepaint);
+
+// Worth a line: a report about text on a key reads very differently depending on
+// whether the host asked for a language we have a table for.
+log.info(`language: host reports "${language}", key text ${translated ? `in ${language}` : 'falls back to English'}`);
 
 wavelink.start();
 

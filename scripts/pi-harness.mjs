@@ -43,7 +43,9 @@ const MIME = {
     '.woff': 'font/woff',
     '.woff2': 'font/woff2',
     '.svg': 'image/svg+xml',
-    '.png': 'image/png'
+    '.png': 'image/png',
+    // Los archivos de idioma. El charset importa: zh_CN.json es todo multibyte.
+    '.json': 'application/json; charset=utf-8'
 };
 
 /** Persisted settings, keyed by action — the host's job, faked in memory. */
@@ -157,6 +159,7 @@ client.on('ready', () => {
     for (const action of Object.keys(PAGES)) {
         console.log(`   ${action.padEnd(13)} http://127.0.0.1:${HTTP_PORT}/?action=${action}`);
     }
+    console.log(`\n   Agregale &lang=en, &lang=es o &lang=zh_CN para ver la pantalla en ese idioma.`);
     console.log('\nLo que la pantalla guarde se ve aca abajo. Ctrl+C para salir.');
 });
 
