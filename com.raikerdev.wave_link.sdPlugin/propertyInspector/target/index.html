@@ -9,46 +9,49 @@
 
 <body>
     <div class="sdpi-wrapper">
+        <!-- Source text is English; the SDK swaps it for the host's language.
+             Every string here needs a key in the Localization block of each
+             language file, or it renders as "undefined". -->
         <div class="mb-1">
-            <label class="form-label" for="typeSelect">Tipo</label>
+            <label class="form-label" for="typeSelect">Type</label>
             <select class="form-select" id="typeSelect">
-                <option value="">Selecciona un tipo...</option>
-                <option value="channel">Canal (master)</option>
-                <option value="channelMix">Canal dentro de un Mix</option>
-                <option value="input">Entrada</option>
-                <option value="output">Salida</option>
+                <option value="">Select a type...</option>
+                <option value="channel">Channel (master)</option>
+                <option value="channelMix">Channel within a Mix</option>
+                <option value="input">Input</option>
+                <option value="output">Output</option>
                 <option value="mix">Mix (master)</option>
             </select>
         </div>
 
         <div class="mb-1">
-            <label class="form-label" for="targetSelect">Destino</label>
+            <label class="form-label" for="targetSelect">Target</label>
             <select class="form-select" id="targetSelect">
-                <option value="">Selecciona un tipo primero...</option>
+                <option value="">Select a type first...</option>
             </select>
         </div>
 
         <!-- Volume Button only. index.js shows the fields each action needs. -->
         <div class="mb-1" id="modeField" hidden>
-            <label class="form-label" for="modeSelect">Al presionar</label>
+            <label class="form-label" for="modeSelect">On press</label>
             <select class="form-select" id="modeSelect">
-                <option value="up">Subir el volumen</option>
-                <option value="down">Bajar el volumen</option>
-                <option value="set">Fijar en un valor</option>
+                <option value="up">Turn the volume up</option>
+                <option value="down">Turn the volume down</option>
+                <option value="set">Set to a value</option>
             </select>
         </div>
 
         <div class="mb-1" id="stepField" hidden>
-            <label class="form-label" for="stepInput">Paso (%)</label>
+            <label class="form-label" for="stepInput">Step (%)</label>
             <input class="form-control" type="number" id="stepInput" min="1" max="25" step="1">
         </div>
 
         <div class="mb-1" id="levelField" hidden>
-            <label class="form-label" for="levelInput">Volumen (%)</label>
+            <label class="form-label" for="levelInput">Volume (%)</label>
             <input class="form-control" type="number" id="levelInput" min="0" max="100" step="1">
         </div>
 
-        <div id="status" class="status">Conectando...</div>
+        <div id="status" class="status">Connecting...</div>
     </div>
 
     <script src="../utils/common.js"></script>

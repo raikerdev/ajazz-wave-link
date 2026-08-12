@@ -40,6 +40,13 @@ const LEVEL_SETTLE_MS = 1500;
 /** Levels are floats; anything under this counts as "Wave Link caught up". */
 const LEVEL_EPSILON = 0.005;
 
+/**
+ * The protocol generation this plugin was written against, as reported by
+ * `getApplicationInfo`. Wave Link 3.2.10 reports 2. A different number does not
+ * necessarily break anything, but it is the first thing to suspect if it does.
+ */
+const EXPECTED_INTERFACE_REVISION = 2;
+
 function discoverPort() {
     try {
         const parsed = JSON.parse(readFileSync(WS_INFO_PATH, 'utf-8'));
@@ -119,6 +126,15 @@ class WaveLinkClient extends EventEmitter {
         this.connecting = false;
         /** Levels we have asked for but Wave Link has not confirmed yet. */
         this.optimistic = new Map();
+        /** Flattened targets and their index, rebuilt only when the cache moves. */
+        this.targetList = undefined;
+        this.targetIndex = undefined;
+    }
+
+    /** Called on every cache mutation: the next read rebuilds the flat list. */
+    invalidateTargets() {
+        this.targetList = undefined;
+        this.targetIndex = undefined;
     }
 
     start() {
@@ -252,6 +268,8 @@ class WaveLinkClient extends EventEmitter {
                 return;
         }
 
+        // Every case above mutated the cache, so the flat list has to be rebuilt.
+        this.invalidateTargets();
         this.emit('changed');
     }
 
@@ -272,7 +290,33 @@ class WaveLinkClient extends EventEmitter {
         });
     }
 
+    /**
+     * Records which Wave Link we are talking to, and says so when it is not the
+     * generation this plugin was built against — so a future protocol change
+     * shows up as one clear line instead of a pile of odd behaviour.
+     */
+    async checkVersion() {
+        try {
+            this.appInfo = await this.call('getApplicationInfo');
+        } catch (err) {
+            this.log.info(`wavelink: could not read the application info: ${err.message}`);
+            return;
+        }
+
+        const { name, version, interfaceRevision } = this.appInfo;
+        this.log.info(`wavelink: ${name} ${version}, interfaceRevision ${interfaceRevision}`);
+
+        if (interfaceRevision !== EXPECTED_INTERFACE_REVISION) {
+            this.log.error(
+                `wavelink: this plugin was built against interfaceRevision ${EXPECTED_INTERFACE_REVISION}. ` +
+                'If something behaves oddly, the protocol is the first thing to suspect.'
+            );
+        }
+    }
+
     async loadSnapshot() {
+        await this.checkVersion();
+
         const [channels, inputs, outputs, mixes] = await Promise.all([
             this.call('getChannels'),
             this.call('getInputDevices'),
@@ -283,6 +327,7 @@ class WaveLinkClient extends EventEmitter {
         this.inputDevices = inputs.inputDevices;
         this.outputDevices = outputs.outputDevices;
         this.mixes = mixes.mixes;
+        this.invalidateTargets();
 
         // Every device seen so far reports an empty table and a plain 0..1 range.
         // If one ever arrives populated, the mapping is probably a curve rather
@@ -303,8 +348,23 @@ class WaveLinkClient extends EventEmitter {
         return this.ws?.readyState === WebSocket.OPEN;
     }
 
+    /**
+     * The flat target list as Wave Link last reported it, without any optimistic
+     * level applied. Built once and kept until the cache changes: it is walked on
+     * every notification, once per visible key.
+     */
+    baseTargets() {
+        if (this.targetList) return this.targetList;
+
+        this.targetList = this.buildTargets();
+        this.targetIndex = new Map(
+            this.targetList.map(t => [this.optimisticKey(t.targetType, t.targetId), t])
+        );
+        return this.targetList;
+    }
+
     /** Every addressable thing in Wave Link, flattened into one list for the property inspector. */
-    getTargets() {
+    buildTargets() {
         const targets = [];
 
         for (const c of this.channels) {
@@ -367,6 +427,11 @@ class WaveLinkClient extends EventEmitter {
             });
         }
 
+        return targets;
+    }
+
+    getTargets() {
+        const targets = this.baseTargets();
         if (this.optimistic.size === 0) return targets;
 
         // A dial mid-spin is ahead of what Wave Link has confirmed; show that.
@@ -376,8 +441,16 @@ class WaveLinkClient extends EventEmitter {
         });
     }
 
+    /** Single lookup, no list walk: this runs once per visible key on every change. */
     getTarget(targetType, targetId) {
-        return this.getTargets().find(t => t.targetType === targetType && t.targetId === targetId);
+        this.baseTargets();
+
+        const key = this.optimisticKey(targetType, targetId);
+        const target = this.targetIndex.get(key);
+        if (!target) return undefined;
+
+        const level = this.applyOptimistic(key, target.level);
+        return level === target.level ? target : { ...target, level };
     }
 
     /** A channelMix id already contains "::", so the key needs a separator ids cannot hold. */

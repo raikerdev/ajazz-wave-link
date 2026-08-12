@@ -1,9 +1,8 @@
 /// <reference path="../utils/common.js" />
 /// <reference path="../utils/action.js" />
 
-// Same contract as the other inspector — see propertyInspector/target/index.js
-// for why $local is off and $back is on.
-const $local = false, $back = true, $dom = {
+// Same contract as the other inspector — see propertyInspector/target/index.js.
+const $local = true, $back = true, $dom = {
     main: $('.sdpi-wrapper'),
     output: $('#outputSelect'),
     mix: $('#mixSelect'),
@@ -12,6 +11,15 @@ const $local = false, $back = true, $dom = {
 };
 
 window.connectMiraBoxSDSocket = connectElgatoStreamDeckSocket;
+
+/** Translates a string built at runtime. See propertyInspector/target/index.js. */
+function t(text, vars) {
+    let out = $lang?.[text] || text;
+    for (const [key, value] of Object.entries(vars || {})) {
+        out = out.split(`{${key}}`).join(value);
+    }
+    return out;
+}
 
 /** Outputs and mixes, taken from the same target list the other inspector uses. */
 let outputs = [];
@@ -34,9 +42,9 @@ function fill(select, items, placeholder, selectedId) {
 }
 
 function render() {
-    fill($dom.output, outputs, outputs.length ? 'Selecciona una salida...' : '(sin salidas)', selected.outputId);
-    fill($dom.mix, mixes, 'Selecciona un mix...', selected.mixId);
-    fill($dom.altMix, mixes, '(ninguno)', selected.altMixId);
+    fill($dom.output, outputs, outputs.length ? t('Select an output...') : t('(no outputs)'), selected.outputId);
+    fill($dom.mix, mixes, t('Select a mix...'), selected.mixId);
+    fill($dom.altMix, mixes, t('(none)'), selected.altMixId);
 }
 
 const nameOf = (list, id) => list.find(i => i.targetId === id)?.targetName || '';
@@ -57,14 +65,14 @@ function save() {
 /** Spells out what the key will do, so the alternate-mix behaviour is not a surprise. */
 function describe() {
     if (!selected.outputId || !selected.mixId) {
-        setStatus('Elegi una salida y un mix.');
+        setStatus(t('Pick an output and a mix.'));
         return;
     }
-    const output = selected.outputName || 'la salida';
+    const output = selected.outputName || t('the output');
     if (selected.altMixId && selected.altMixId !== selected.mixId) {
-        setStatus(`Alterna ${output} entre "${selected.mixName}" y "${selected.altMixName}".`);
+        setStatus(t('Flips {output} between "{a}" and "{b}".', { output, a: selected.mixName, b: selected.altMixName }));
     } else {
-        setStatus(`Manda ${output} a "${selected.mixName}".`);
+        setStatus(t('Sends {output} to "{mix}".', { output, mix: selected.mixName }));
     }
 }
 
@@ -93,7 +101,7 @@ const $propEvent = {
         render();
 
         if (!payload.connected) {
-            setStatus('Wave Link no esta conectado. Abrilo y volve a abrir esta ventana.', true);
+            setStatus(t('Wave Link is not connected. Open it, then reopen this panel.'), true);
         } else {
             describe();
         }
@@ -107,7 +115,7 @@ const $propEvent = {
         return;
     }
     if (attempt > 100) {
-        setStatus('No se pudo conectar con el plugin.', true);
+        setStatus(t('Could not reach the plugin.'), true);
         return;
     }
     setTimeout(() => requestTargets(attempt + 1), 50);

@@ -1,13 +1,14 @@
 /// <reference path="../utils/common.js" />
 /// <reference path="../utils/action.js" />
 
-// $local: run the SDK's automatic text translation. Off, because this inspector
-//         ships its labels already written and the translator rewrites every text
-//         node to `undefined` when a key is missing from the language file.
+// $local: run the SDK's automatic text translation over the static markup. The
+//         source text is English and each language file maps it in its
+//         Localization block. Beware: the SDK's walker writes `undefined` for any
+//         string it cannot find, so every text node needs a key.
 // $back:  we decide when the form becomes visible. It is visible from the start,
 //         so we never depend on `didReceiveSettings` arriving to show anything.
 // $dom:   static elements, looked up once.
-const $local = false, $back = true, $dom = {
+const $local = true, $back = true, $dom = {
     main: $('.sdpi-wrapper'),
     type: $('#typeSelect'),
     target: $('#targetSelect'),
@@ -25,6 +26,25 @@ const $local = false, $back = true, $dom = {
 const DEFAULT_STEP = 2;
 const DEFAULT_BUTTON_STEP = 5;
 const DEFAULT_LEVEL = 50;
+
+/**
+ * Translates a string built at runtime, which the SDK's walker never sees
+ * because it only runs once over the static markup.
+ *
+ * Falls back to the English source rather than to `undefined`: a missing key
+ * should read a bit foreign, not broken. `$lang` arrives asynchronously, so
+ * early calls legitimately fall back too.
+ *
+ * @param {string} text English source, with `{placeholders}`
+ * @param {Record<string, string|number>} [vars]
+ */
+function t(text, vars) {
+    let out = $lang?.[text] || text;
+    for (const [key, value] of Object.entries(vars || {})) {
+        out = out.split(`{${key}}`).join(value);
+    }
+    return out;
+}
 
 /**
  * Wraps the SDK's entry point so the form can lay itself out the moment the host
@@ -65,7 +85,7 @@ function applyActionVisibility() {
     $dom.modeField.hidden = !isButton;
     // A step is a step whether it comes from a detent or a press; only the wording differs.
     $dom.stepField.hidden = !(isKnob || (isButton && mode !== 'set'));
-    $dom.stepLabel.textContent = isKnob ? 'Paso por click (%)' : 'Paso (%)';
+    $dom.stepLabel.textContent = isKnob ? t('Step per click (%)') : t('Step (%)');
     $dom.levelField.hidden = !(isButton && mode === 'set');
 }
 
@@ -85,26 +105,26 @@ function setStatus(text, isError = false) {
     $dom.status.classList.toggle('error', isError);
 }
 
-/** Rebuilds the Destino dropdown from the targets matching the chosen Tipo. */
+/** Rebuilds the Target dropdown from the targets matching the chosen Type. */
 function renderTargets() {
     const type = $dom.type.value;
     $dom.target.innerHTML = '';
 
     if (!type) {
-        $dom.target.appendChild(new Option('Selecciona un tipo primero...', ''));
+        $dom.target.appendChild(new Option(t('Select a type first...'), ''));
         return;
     }
 
-    const matching = allTargets.filter(t => t.targetType === type);
+    const matching = allTargets.filter(item => item.targetType === type);
     if (!matching.length) {
-        $dom.target.appendChild(new Option('(sin destinos de este tipo)', ''));
+        $dom.target.appendChild(new Option(t('(nothing of this type)'), ''));
         return;
     }
 
-    $dom.target.appendChild(new Option('Selecciona un destino...', ''));
-    for (const t of matching) {
-        const option = new Option(t.targetName, t.targetId);
-        if (t.targetId === selected.targetId) option.selected = true;
+    $dom.target.appendChild(new Option(t('Select a target...'), ''));
+    for (const item of matching) {
+        const option = new Option(item.targetName, item.targetId);
+        if (item.targetId === selected.targetId) option.selected = true;
         $dom.target.appendChild(option);
     }
 }
@@ -113,7 +133,7 @@ function renderTargets() {
 function save() {
     const targetType = $dom.type.value;
     const targetId = $dom.target.value;
-    const match = allTargets.find(t => t.targetType === targetType && t.targetId === targetId);
+    const match = allTargets.find(item => item.targetType === targetType && item.targetId === targetId);
 
     const stepDefault = actionName() === 'volumebutton' ? DEFAULT_BUTTON_STEP : DEFAULT_STEP;
     const level = Number($dom.level.value);
@@ -130,13 +150,13 @@ function save() {
     };
     $websocket.saveData(selected);
 
-    if (match) setStatus(`Guardado: ${match.targetName}`);
-    else if (targetType) setStatus('Elegi un destino para terminar de configurar.');
-    else setStatus('Elegi un tipo y un destino.');
+    if (match) setStatus(t('Saved: {name}', { name: match.targetName }));
+    else if (targetType) setStatus(t('Pick a target to finish setting this up.'));
+    else setStatus(t('Pick a type and a target.'));
 }
 
 $dom.type.addEventListener('change', () => {
-    // A new Tipo invalidates the previous Destino.
+    // A new Type invalidates the previous Target.
     selected = { ...selected, targetType: $dom.type.value, targetId: '', targetName: '' };
     renderTargets();
     save();
@@ -168,11 +188,11 @@ const $propEvent = {
         renderTargets();
 
         if (!payload.connected) {
-            setStatus('Wave Link no esta conectado. Abrilo y volve a abrir esta ventana.', true);
+            setStatus(t('Wave Link is not connected. Open it, then reopen this panel.'), true);
         } else if (selected.targetName) {
-            setStatus(`Controlando: ${selected.targetName}`);
+            setStatus(t('Controlling: {name}', { name: selected.targetName }));
         } else {
-            setStatus(`${allTargets.length} destinos disponibles.`);
+            setStatus(t('{count} targets available.', { count: allTargets.length }));
         }
     }
 };
@@ -185,7 +205,7 @@ const $propEvent = {
         return;
     }
     if (attempt > 100) {
-        setStatus('No se pudo conectar con el plugin.', true);
+        setStatus(t('Could not reach the plugin.'), true);
         return;
     }
     setTimeout(() => requestTargets(attempt + 1), 50);

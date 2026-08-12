@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
 const PLUGIN_URL = new URL('../com.raikerdev.wave_link.sdPlugin/', import.meta.url);
+const PLUGIN_ROOT = fileURLToPath(PLUGIN_URL);
 const PI_ROOT = fileURLToPath(new URL('propertyInspector/', PLUGIN_URL));
 const require = createRequire(new URL('plugin/package.json', PLUGIN_URL));
 const { WebSocketServer } = require('ws');
@@ -53,13 +54,13 @@ const client = new WaveLinkClient({ info: msg => console.log(`· ${msg}`), error
  * The host calls the page's entry function once the webview is up. Injecting the
  * same call means you just open a URL instead of pasting anything into a console.
  */
-function autoConnect(action) {
+function autoConnect(action, lang) {
     return `
 <script>
   (() => {
     const action = 'com.raikerdev.wave_link.${action}';
     const context = 'harness-${action}';
-    const info = JSON.stringify({ application: { language: 'es', platform: 'windows', version: '3.10.188.226' } });
+    const info = JSON.stringify({ application: { language: '${lang}', platform: 'windows', version: '3.10.188.226' } });
     const actionInfo = JSON.stringify({ action, context, payload: { settings: {} } });
     const connect = window.connectMiraBoxSDSocket || window.connectElgatoStreamDeckSocket;
     connect(${WS_PORT}, context, 'registerPropertyInspector', info, actionInfo);
@@ -70,12 +71,15 @@ function autoConnect(action) {
 createServer(async (req, res) => {
     const url = new URL(req.url, `http://localhost:${HTTP_PORT}`);
     const action = url.searchParams.get('action') || 'volumeknob';
+    // The host reports the app's language; `?lang=` fakes it so the translation
+    // can be checked without changing anything on the machine.
+    const lang = url.searchParams.get('lang') || 'es';
 
     // Redirect rather than serve the page at "/": the inspector loads its scripts
     // with relative paths, and from the root they resolve to the wrong folder.
     if (url.pathname === '/') {
         const page = PAGES[action] || PAGES.volumeknob;
-        res.writeHead(302, { Location: `/${page}?action=${action}` });
+        res.writeHead(302, { Location: `/${page}?action=${action}&lang=${lang}` });
         res.end();
         return;
     }
@@ -83,11 +87,14 @@ createServer(async (req, res) => {
     const path = url.pathname;
 
     try {
-        const file = join(PI_ROOT, decodeURIComponent(path));
+        // The inspector fetches `../../<lang>.json`, which climbs out of the
+        // property inspector folder; the browser normalises that to `/es.json`.
+        const root = /^\/[^/]+\.json$/.test(path) ? PLUGIN_ROOT : PI_ROOT;
+        const file = join(root, decodeURIComponent(path));
         let body = await readFile(file);
 
         if (extname(file) === '.html') {
-            body = `${body.toString()}\n${autoConnect(action)}`;
+            body = `${body.toString()}\n${autoConnect(action, lang)}`;
         }
 
         res.writeHead(200, { 'Content-Type': MIME[extname(file)] || 'application/octet-stream' });

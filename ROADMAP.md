@@ -265,13 +265,12 @@ reportan 0..1, así que la conversión es la identidad. Se validó con un caso
 sintético en rango dB. Si aparece un dispositivo con otro rango, o con la
 `lookUpTable` cargada, queda anotado en el log.
 
-#### 10. Verificar la versión de Wave Link al conectar
+#### 10. Verificar la versión de Wave Link al conectar — ✅ HECHO (2026-08-12)
 
-`getApplicationInfo` devuelve versión y `interfaceRevision` (hoy `2`). Si algún
-día Wave Link cambia el protocolo, hoy el plugin fallaría de formas raras en vez
-de decir "esta versión no es compatible".
-
-**Esfuerzo** bajo · **Riesgo** ninguno.
+`checkVersion()` corre antes del snapshot y deja en el log
+`wavelink: Elgato Wave Link 3.2.10.4073, interfaceRevision 2`. Si la revisión no
+es la 2, lo anota como error. No bloquea: una revisión nueva podría ser
+compatible, pero deja una línea clara si algún día algo se comporta raro.
 
 #### 11. Control de efectos — requiere ingeniería inversa
 
@@ -288,22 +287,29 @@ hacer acá mismo con el probe, sin necesidad de un Stream Deck.
 
 **Esfuerzo** alto · **Riesgo** alto. Solo vale la pena si realmente usás efectos.
 
-#### 12. Buscar destinos por índice
+#### 12. Buscar destinos por índice — ✅ HECHO (2026-08-12)
 
-Reemplazar la reconstrucción completa de la lista en `getTarget()` por un `Map`
-que se arme junto con el cache. Hoy no se nota, pero es trabajo desperdiciado en
-el camino más caliente del plugin.
+La lista aplanada y un `Map` por `tipo + id` se arman una vez y se conservan hasta
+que el cache se mueve. `getTarget()` pasó de reconstruir 21 objetos a una
+búsqueda: **0,33 µs**. Ver [dev_doc.md](dev_doc.md#el-índice-de-destinos).
 
-**Esfuerzo** bajo · **Riesgo** bajo.
+Lo que había que cuidar era la invalidación, no la velocidad: se verificó que un
+`channelChanged` se refleja de inmediato y que el nivel optimista sigue pisando al
+del cache.
 
-#### 13. Traducir la pantalla de configuración
+#### 13. Traducir la pantalla de configuración — ✅ HECHO (2026-08-12)
 
-Los textos están escritos en español a mano y `$local` está apagado a propósito,
-porque el traductor automático del SDK convierte en `undefined` cualquier texto
-sin clave. Para publicar el plugin habría que completar el bloque `Localization`
-de cada archivo de idioma y volver a encenderlo.
+El texto fuente pasó a inglés y se tradujo por dos caminos: el markup estático por
+el recorrido del SDK (`$local = true`), y lo que se arma en runtime por una
+función `t()` que **cae al inglés** en vez de a `undefined`. Ver
+[dev_doc.md](dev_doc.md#idiomas).
 
-**Esfuerzo** bajo · **Riesgo** bajo, pero hay que probar idioma por idioma.
+`en.json` y `es.json` con 36 claves cada uno. Verificado en las dos pantallas, en
+los dos idiomas y con un idioma sin archivo (`fr`), que cae a inglés limpio.
+
+**No agregar archivos de idioma con el bloque `Localization` vacío**: el recorrido
+del SDK los tomaría como válidos y dejaría la pantalla llena de `undefined`. Es
+mejor no tener el archivo.
 
 #### 14. Soporte para macOS
 
