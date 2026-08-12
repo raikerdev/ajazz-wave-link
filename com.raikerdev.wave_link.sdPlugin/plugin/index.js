@@ -1,6 +1,7 @@
 const { Plugins, Actions, log } = require('./utils/plugin');
 const { WaveLinkClient } = require('./wavelink/client');
 const devMode = require('./dev/devMode');
+const { t } = require('./i18n');
 
 /**
  * The artwork module. Normally the bundled one; with a `dev.json` present it is
@@ -108,13 +109,13 @@ function paintMuteToggle(context, settings) {
     const { targetType, targetId } = settings || {};
 
     if (!targetType || !targetId) {
-        plugin.setImage(context, render.toDataUri(render.unconfiguredFace('Sin destino')));
+        plugin.setImage(context, render.toDataUri(render.unconfiguredFace(t('No target'))));
         return;
     }
 
     const target = wavelink.getTarget(targetType, targetId);
     if (!target) {
-        const why = wavelink.isReady() ? 'No existe' : 'Sin conexión';
+        const why = wavelink.isReady() ? t('Not found') : t('No connection');
         plugin.setImage(context, render.toDataUri(render.unconfiguredFace(why)));
         return;
     }
@@ -139,13 +140,13 @@ function paintVolumeKnob(context, settings) {
     const { targetType, targetId } = settings || {};
 
     if (!targetType || !targetId) {
-        plugin.setImage(context, render.toDataUri(render.unconfiguredFace('Sin destino', surface)));
+        plugin.setImage(context, render.toDataUri(render.unconfiguredFace(t('No target'), surface)));
         return;
     }
 
     const target = wavelink.getTarget(targetType, targetId);
     if (!target) {
-        const why = wavelink.isReady() ? 'No existe' : 'Sin conexión';
+        const why = wavelink.isReady() ? t('Not found') : t('No connection');
         plugin.setImage(context, render.toDataUri(render.unconfiguredFace(why, surface)));
         return;
     }
@@ -175,13 +176,13 @@ function paintVolumeButton(context, settings) {
     const { targetType, targetId } = settings || {};
 
     if (!targetType || !targetId) {
-        plugin.setImage(context, render.toDataUri(render.unconfiguredFace('Sin destino')));
+        plugin.setImage(context, render.toDataUri(render.unconfiguredFace(t('No target'))));
         return;
     }
 
     const target = wavelink.getTarget(targetType, targetId);
     if (!target) {
-        const why = wavelink.isReady() ? 'No existe' : 'Sin conexión';
+        const why = wavelink.isReady() ? t('Not found') : t('No connection');
         plugin.setImage(context, render.toDataUri(render.unconfiguredFace(why)));
         return;
     }
@@ -197,14 +198,14 @@ function paintEffect(context, settings) {
     const { channelId, effectId } = settings || {};
 
     if (!channelId || !effectId) {
-        plugin.setImage(context, render.toDataUri(render.unconfiguredFace('Sin destino')));
+        plugin.setImage(context, render.toDataUri(render.unconfiguredFace(t('No target'))));
         return;
     }
 
     const effect = wavelink.getEffect(channelId, effectId);
     if (!effect) {
         // A removed effect is a real case: the user can delete it in Wave Link.
-        const why = wavelink.isReady() ? 'No existe' : 'Sin conexión';
+        const why = wavelink.isReady() ? t('Not found') : t('No connection');
         plugin.setImage(context, render.toDataUri(render.unconfiguredFace(why)));
         return;
     }
@@ -241,7 +242,8 @@ function resolveOutputMix(settings) {
 
     return {
         outputName: output.targetName,
-        currentMixName: currentMix?.targetName || '',
+        // An output can legitimately feed no mix at all.
+        currentMixName: currentMix?.targetName || t('No mix'),
         nextMixId: nextId,
         nextMixName: nextId === currentMixId ? '' : nextName,
         onTarget
@@ -253,8 +255,8 @@ function paintOutputMix(context, settings) {
     const state = resolveOutputMix(settings);
     if (!state) {
         const why = !settings?.outputId || !settings?.mixId
-            ? 'Sin destino'
-            : (wavelink.isReady() ? 'No existe' : 'Sin conexión');
+            ? t('No target')
+            : (wavelink.isReady() ? t('Not found') : t('No connection'));
         plugin.setImage(context, render.toDataUri(render.unconfiguredFace(why)));
         return;
     }

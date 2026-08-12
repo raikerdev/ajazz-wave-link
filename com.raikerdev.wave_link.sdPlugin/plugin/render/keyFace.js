@@ -376,7 +376,8 @@ function effectFace({ channelName, effectName, isEnabled, iconPng }) {
  */
 function splitMixName(name) {
     const clean = String(name || '').trim();
-    if (!clean) return ['Sin mix'];
+    // The caller supplies the wording for "nothing here"; this module holds no text.
+    if (!clean) return ['—'];
     const dash = clean.indexOf(' - ');
     if (dash >= 0) return [clean.slice(0, dash), clean.slice(dash + 3)];
     const space = clean.lastIndexOf(' ');

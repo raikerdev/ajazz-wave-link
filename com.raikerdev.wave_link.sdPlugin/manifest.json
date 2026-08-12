@@ -3,7 +3,7 @@
     {
       "UUID": "com.raikerdev.wave_link.volumeknob",
       "Name": "Volume Knob",
-      "Tooltip": "Gira el dial para ajustar el volumen y presionalo para mutear. Elegi el canal, entrada, salida o mix en la configuracion.",
+      "Tooltip": "Turn the dial to adjust the volume, press it to mute. Pick the channel, input, output or mix in the settings.",
       "Icon": "static/knob.png",
       "DisableAutomaticStates": true,
       "States": [
@@ -27,7 +27,7 @@
     {
       "UUID": "com.raikerdev.wave_link.mutetoggle",
       "Name": "Mute Toggle",
-      "Tooltip": "Presiona para alternar el mute. Elegi el canal, entrada, salida o mix en la configuracion.",
+      "Tooltip": "Press to toggle mute. Pick the channel, input, output or mix in the settings.",
       "Icon": "static/mute.png",
       "DisableAutomaticStates": true,
       "States": [
@@ -55,7 +55,7 @@
     {
       "UUID": "com.raikerdev.wave_link.volumebutton",
       "Name": "Volume Button",
-      "Tooltip": "Sube, baja o fija el volumen desde un boton, sin necesidad de un dial.",
+      "Tooltip": "Raise, lower or set the volume from a key, with no dial needed.",
       "Icon": "static/volumebutton.png",
       "DisableAutomaticStates": true,
       "States": [
@@ -81,7 +81,7 @@
     {
       "UUID": "com.raikerdev.wave_link.audioeffect",
       "Name": "Audio Effect",
-      "Tooltip": "Enciende o apaga un efecto VST/AU cargado en un canal de Wave Link.",
+      "Tooltip": "Turn a VST/AU effect loaded on a Wave Link channel on or off.",
       "Icon": "static/audioeffect.png",
       "DisableAutomaticStates": true,
       "States": [
@@ -105,7 +105,7 @@
     {
       "UUID": "com.raikerdev.wave_link.outputmix",
       "Name": "Output Mix",
-      "Tooltip": "Cambia a que mix escucha una salida. Con un mix alternativo configurado, alterna entre los dos.",
+      "Tooltip": "Change which mix an output listens to. Set an alternate mix and it flips between the two.",
       "Icon": "static/outputmix.png",
       "DisableAutomaticStates": true,
       "States": [
@@ -132,7 +132,7 @@
   "SDKVersion": 1,
   "Author": "raikerdev",
   "Name": "Wave Link Control",
-  "Description": "Controla volumen y mute de canales, entradas, salidas y mixes de Elgato Wave Link 3 desde los diales y botones del Stream Dock.",
+  "Description": "Control the volume and mute state of Elgato Wave Link 3 channels, inputs, outputs and mixes from the Stream Dock dials and keys.",
   "Icon": "static/plugin.png",
   "Category": "Wave Link",
   "CategoryIcon": "static/category.png",
