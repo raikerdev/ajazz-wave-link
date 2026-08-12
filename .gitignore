@@ -5,6 +5,7 @@
 .claude/settings.local.json
 claude_context.md
 dev_doc.md
+RELEASE.md
 
 ### macOS ###
 # General

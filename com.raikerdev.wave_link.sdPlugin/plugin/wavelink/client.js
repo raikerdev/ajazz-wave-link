@@ -227,7 +227,15 @@ class WaveLinkClient extends EventEmitter {
                 break;
             case 'channelChanged': {
                 const idx = this.channels.findIndex(c => c.id === msg.params.id);
-                if (idx >= 0) this.channels[idx] = { ...this.channels[idx], ...msg.params };
+                if (idx >= 0) {
+                    const merged = { ...this.channels[idx], ...msg.params };
+                    // An effect toggle echoes back only `effects`, and possibly only
+                    // the one that moved. Merging keeps the channel's other effects.
+                    if (msg.params.effects) {
+                        merged.effects = mergeById(this.channels[idx].effects, msg.params.effects);
+                    }
+                    this.channels[idx] = merged;
+                }
                 break;
             }
             case 'inputDevicesChanged':
@@ -591,6 +599,47 @@ class WaveLinkClient extends EventEmitter {
             default:
                 throw new Error(`unknown target type ${targetType}`);
         }
+    }
+
+    /**
+     * Every VST/AU effect loaded on any channel, flattened the way targets are.
+     *
+     * Kept separate from `getTargets()` because an effect is not a volume: it has
+     * no level, only an on/off. Wave Link reports them as
+     * `{ id, name, isEnabled }` inside each channel.
+     */
+    getEffects() {
+        const effects = [];
+        for (const channel of this.channels) {
+            for (const effect of channel.effects || []) {
+                effects.push({
+                    channelId: channel.id,
+                    channelName: channel.name,
+                    effectId: effect.id,
+                    effectName: effect.name,
+                    isEnabled: Boolean(effect.isEnabled)
+                });
+            }
+        }
+        return effects;
+    }
+
+    getEffect(channelId, effectId) {
+        return this.getEffects().find(e => e.channelId === channelId && e.effectId === effectId);
+    }
+
+    /**
+     * Turns one effect on or off.
+     *
+     * Written through `setChannel`, the same way a channel's mixes are — there is
+     * no dedicated effects method. `setPluginInfo` exists in the protocol but is
+     * not needed for this.
+     */
+    async setEffectEnabled(channelId, effectId, isEnabled) {
+        return this.call('setChannel', {
+            id: channelId,
+            effects: [{ id: effectId, isEnabled }]
+        });
     }
 
     /**

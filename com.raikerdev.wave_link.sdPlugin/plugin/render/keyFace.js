@@ -339,6 +339,38 @@ function volumeButtonFace(target, iconPng, operation) {
 }
 
 /**
+ * Face of an Audio Effect key: which channel, which effect, and whether it is on.
+ *
+ * The state has to carry the whole message — an effect is on or off, there is no
+ * number — so the whole card lights up rather than just a label.
+ */
+function effectFace({ channelName, effectName, isEnabled, iconPng }) {
+    const L = LAYOUTS.key;
+    const accent = isEnabled ? LEVEL : DIM;
+    const lines = splitMixName(effectName);
+    const firstY = lines.length > 1 ? 66 : 78;
+
+    const body = lines
+        .map((line, i) => `<text x="72" y="${firstY + i * 25}" fill="${isEnabled ? TEXT : DIM}"
+        font-family="sans-serif" font-size="22" font-weight="bold"
+        text-anchor="middle">${xml(clip(line, 12))}</text>`)
+        .join('\n  ');
+
+    return `${open(L)}
+  ${isEnabled
+        ? `<rect x="2" y="2" width="${L.w - 4}" height="${L.h - 4}" rx="${L.radius - 2}"
+        fill="none" stroke="${LEVEL}" stroke-width="3" />`
+        : ''}
+  ${iconTag(iconPng, 12, 12, 20)}
+  <text x="${iconPng ? 38 : 72}" y="28" fill="${SCOPE}" font-family="sans-serif" font-size="14"
+        text-anchor="${iconPng ? 'start' : 'middle'}">${xml(clip(stripModel(channelName), 14))}</text>
+  ${body}
+  <text x="72" y="128" fill="${accent}" font-family="sans-serif" font-size="18"
+        font-weight="bold" text-anchor="middle">${isEnabled ? 'ON' : 'OFF'}</text>
+</svg>`;
+}
+
+/**
  * Splits a mix name over two lines so it fits a 144px key.
  * "Stream - Music" reads better stacked than clipped to "Stream - M…".
  */
@@ -459,6 +491,7 @@ module.exports = {
     volumeFace,
     muteFace,
     volumeButtonFace,
+    effectFace,
     outputMixFace,
     unconfiguredFace,
     calibrationFace,

@@ -68,6 +68,18 @@ blanco cuando suena, rojo y tachado cuando está muteado — más el nivel actua
 refleja el estado real: si mutás desde la interfaz de Wave Link, el botón se
 actualiza solo.
 
+### Audio Effect
+
+Para botones. Enciende y apaga un efecto VST/AU que tengas cargado en un canal de
+Wave Link — por ejemplo, un cambiador de voz en el micrófono.
+
+Elegís el **canal** y el **efecto**. La tecla muestra cuál es y se pone en verde
+cuando está encendido.
+
+Los efectos hay que agregarlos primero desde Wave Link; el plugin solo los
+enciende y apaga. Los efectos de **hardware** de los micrófonos Elgato
+(supresión de ruido, Clipguard) no entran acá: son del dispositivo, no del canal.
+
 ### Output Mix
 
 Para botones. Cambia a qué mix escucha una salida: por ejemplo, mandar los

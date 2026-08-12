@@ -32,6 +32,7 @@ const PAGES = {
     volumeknob: 'target/index.html',
     mutetoggle: 'target/index.html',
     volumebutton: 'target/index.html',
+    audioeffect: 'effect/index.html',
     outputmix: 'outputmix/index.html'
 };
 
@@ -127,14 +128,16 @@ wss.on('connection', socket => {
                         event: 'sendToPropertyInspector',
                         action: message.action,
                         context: message.context,
+                        // Mirrors pushTargets() in plugin/index.js. Keep in sync.
                         payload: {
                             type: 'targets',
                             connected: client.isReady(),
                             targets: client.getTargets(),
+                            effects: client.getEffects(),
                             settings: settingsByAction.get(action) || {}
                         }
                     }));
-                    console.log(`<< le mande ${client.getTargets().length} destinos y los settings guardados`);
+                    console.log(`<< le mande ${client.getTargets().length} destinos, ${client.getEffects().length} efectos y los settings guardados`);
                 }
                 break;
 

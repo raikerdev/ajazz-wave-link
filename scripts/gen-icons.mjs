@@ -191,6 +191,16 @@ const MUTE_ACTIVE = [
     [RED, (x, y) => capsule(x, y, 0.86, 0.36, 0.66, 0.64, 0.045)]
 ];
 
+/** Audio effect: a waveform passing through, the middle band lifted. */
+const AUDIO_EFFECT = [
+    PLATE,
+    [TEAL, (x, y) => roundedRect(x, y, 0.20, 0.44, 0.28, 0.56, 0.04)],
+    [TEAL, (x, y) => roundedRect(x, y, 0.32, 0.34, 0.40, 0.66, 0.04)],
+    [WHITE, (x, y) => roundedRect(x, y, 0.44, 0.18, 0.52, 0.82, 0.04)],
+    [TEAL, (x, y) => roundedRect(x, y, 0.56, 0.30, 0.64, 0.70, 0.04)],
+    [TEAL, (x, y) => roundedRect(x, y, 0.68, 0.44, 0.76, 0.56, 0.04)]
+];
+
 /** Volume from a key: a chevron up over a chevron down. */
 const VOLUME_BUTTON = [
     PLATE,
@@ -236,7 +246,8 @@ const ICONS = [
     ['mute', 72, MUTE],
     ['mute-active', 72, MUTE_ACTIVE],
     ['outputmix', 72, OUTPUT_MIX],
-    ['volumebutton', 72, VOLUME_BUTTON]
+    ['volumebutton', 72, VOLUME_BUTTON],
+    ['audioeffect', 72, AUDIO_EFFECT]
 ];
 
 for (const [name, size, layers] of ICONS) {

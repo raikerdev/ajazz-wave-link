@@ -14,11 +14,25 @@
     "Name": "Volume Button",
     "Tooltip": "Sube, baja o fija el volumen desde un boton, sin necesidad de un dial."
   },
+  "com.raikerdev.wave_link.audioeffect": {
+    "Name": "Audio Effect",
+    "Tooltip": "Enciende o apaga un efecto VST/AU cargado en un canal de Wave Link."
+  },
   "com.raikerdev.wave_link.outputmix": {
     "Name": "Output Mix",
     "Tooltip": "Cambia a que mix escucha una salida. Con un mix alternativo configurado, alterna entre los dos."
   },
   "Localization": {
+    "Channel": "Canal",
+    "Effect": "Efecto",
+    "Select a channel...": "Selecciona un canal...",
+    "Select a channel first...": "Selecciona un canal primero...",
+    "Select an effect...": "Selecciona un efecto...",
+    "(no channel has effects)": "(ningun canal tiene efectos)",
+    "Pick a channel and an effect.": "Elegi un canal y un efecto.",
+    "Pick an effect to finish setting this up.": "Elegi un efecto para terminar de configurar.",
+    "Toggles \"{effect}\" on {channel}.": "Alterna \"{effect}\" en {channel}.",
+    "No effects loaded. Add one to a channel in Wave Link first.": "No hay efectos cargados. Agrega uno a un canal desde Wave Link.",
     "Type": "Tipo",
     "Select a type...": "Selecciona un tipo...",
     "Channel (master)": "Canal (master)",

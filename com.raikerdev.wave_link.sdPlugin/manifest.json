@@ -79,6 +79,30 @@
       "PropertyInspectorPath": "propertyInspector/target/index.html"
     },
     {
+      "UUID": "com.raikerdev.wave_link.audioeffect",
+      "Name": "Audio Effect",
+      "Tooltip": "Enciende o apaga un efecto VST/AU cargado en un canal de Wave Link.",
+      "Icon": "static/audioeffect.png",
+      "DisableAutomaticStates": true,
+      "States": [
+        {
+          "Image": "static/audioeffect.png",
+          "TitleAlignment": "center",
+          "FontSize": "10"
+        }
+      ],
+      "Settings": {
+        "channelId": "",
+        "channelName": "",
+        "effectId": "",
+        "effectName": ""
+      },
+      "Controllers": ["Keypad"],
+      "UserTitleEnabled": true,
+      "SupportedInMultiActions": true,
+      "PropertyInspectorPath": "propertyInspector/effect/index.html"
+    },
+    {
       "UUID": "com.raikerdev.wave_link.outputmix",
       "Name": "Output Mix",
       "Tooltip": "Cambia a que mix escucha una salida. Con un mix alternativo configurado, alterna entre los dos.",

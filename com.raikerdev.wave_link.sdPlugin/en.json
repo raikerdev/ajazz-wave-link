@@ -14,11 +14,25 @@
     "Name": "Volume Button",
     "Tooltip": "Raise, lower or set the volume from a key, with no dial needed."
   },
+  "com.raikerdev.wave_link.audioeffect": {
+    "Name": "Audio Effect",
+    "Tooltip": "Turn a VST/AU effect loaded on a Wave Link channel on or off."
+  },
   "com.raikerdev.wave_link.outputmix": {
     "Name": "Output Mix",
     "Tooltip": "Change which mix an output listens to. Set an alternate mix and it flips between the two."
   },
   "Localization": {
+    "Channel": "Channel",
+    "Effect": "Effect",
+    "Select a channel...": "Select a channel...",
+    "Select a channel first...": "Select a channel first...",
+    "Select an effect...": "Select an effect...",
+    "(no channel has effects)": "(no channel has effects)",
+    "Pick a channel and an effect.": "Pick a channel and an effect.",
+    "Pick an effect to finish setting this up.": "Pick an effect to finish setting this up.",
+    "Toggles \"{effect}\" on {channel}.": "Toggles \"{effect}\" on {channel}.",
+    "No effects loaded. Add one to a channel in Wave Link first.": "No effects loaded. Add one to a channel in Wave Link first.",
     "Type": "Type",
     "Select a type...": "Select a type...",
     "Channel (master)": "Channel (master)",

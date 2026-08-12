@@ -192,6 +192,31 @@ function paintVolumeButton(context, settings) {
     ));
 }
 
+/** Draws an Audio Effect key: the channel, the effect and whether it is on. */
+function paintEffect(context, settings) {
+    const { channelId, effectId } = settings || {};
+
+    if (!channelId || !effectId) {
+        plugin.setImage(context, render.toDataUri(render.unconfiguredFace('Sin destino')));
+        return;
+    }
+
+    const effect = wavelink.getEffect(channelId, effectId);
+    if (!effect) {
+        // A removed effect is a real case: the user can delete it in Wave Link.
+        const why = wavelink.isReady() ? 'No existe' : 'Sin conexión';
+        plugin.setImage(context, render.toDataUri(render.unconfiguredFace(why)));
+        return;
+    }
+
+    plugin.setImage(context, render.toDataUri(render.effectFace({
+        channelName: effect.channelName,
+        effectName: effect.effectName,
+        isEnabled: effect.isEnabled,
+        iconPng: wavelink.getIcon('channel', channelId)
+    })));
+}
+
 /**
  * Works out what an Output Mix key is looking at and what pressing it will do.
  *
@@ -256,6 +281,11 @@ function repaintAll() {
             paintVolumeButton(context, settings);
         }
     }
+    if (plugin.audioeffect) {
+        for (const [context, settings] of Object.entries(plugin.audioeffect.data)) {
+            paintEffect(context, settings);
+        }
+    }
     if (plugin.outputmix) {
         for (const [context, settings] of Object.entries(plugin.outputmix.data)) {
             paintOutputMix(context, settings);
@@ -297,6 +327,9 @@ function pushTargets() {
         type: 'targets',
         connected: wavelink.isReady(),
         targets: wavelink.getTargets(),
+        // Effects ride along on the same round trip: only one inspector needs
+        // them, and the list is a handful of entries.
+        effects: wavelink.getEffects(),
         settings
     });
 }
@@ -467,6 +500,37 @@ plugin.volumebutton = new Actions({
 
         const delta = stepFraction(settings) * (settings?.mode === 'down' ? -1 : 1);
         wavelink.nudgeLevel(target.targetType, target.targetId, delta);
+    }
+});
+
+plugin.audioeffect = new Actions({
+    ...targetActionBase(),
+    default: { channelId: '', channelName: '', effectId: '', effectName: '' },
+
+    _willAppear({ context, payload }) {
+        paintEffect(context, payload?.settings);
+    },
+
+    _didReceiveSettings({ context, payload }) {
+        paintEffect(context, payload?.settings);
+    },
+
+    keyUp(event) {
+        const { context, payload } = event;
+        const settings = payload?.settings || this.data[context];
+        const effect = settings?.channelId && settings?.effectId
+            ? wavelink.getEffect(settings.channelId, settings.effectId)
+            : undefined;
+
+        if (!effect) {
+            reportUnavailable(context);
+            return;
+        }
+
+        wavelink.setEffectEnabled(effect.channelId, effect.effectId, !effect.isEnabled).catch(err => {
+            log.error(`setEffectEnabled failed for ${effect.effectName}: ${err.message}`);
+            plugin.showAlert(context);
+        });
     }
 });
 

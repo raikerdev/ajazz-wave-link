@@ -27,6 +27,8 @@ const EXCLUDED = [
     'plugin\\index.js',
     'plugin\\utils',
     'plugin\\wavelink',
+    'plugin\\render',
+    'plugin\\dev',
     'plugin\\autofile.js',
     'plugin\\package.json',
     'plugin\\package-lock.json',

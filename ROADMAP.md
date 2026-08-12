@@ -1,7 +1,8 @@
 # Estado del plugin y plan de mejoras
 
-Evaluación al **2026-08-10**, con la versión 1.0.0 ya probada y funcionando sobre
-el dispositivo real. Detalles de implementación en [dev_doc.md](dev_doc.md).
+Evaluación al **2026-08-12**, con 12 de 14 puntos hechos. Detalles de
+implementación en [dev_doc.md](dev_doc.md); los pasos para publicar, en
+[RELEASE.md](RELEASE.md).
 
 ## Dónde está parado hoy
 
@@ -20,22 +21,22 @@ el dispositivo real. Detalles de implementación en [dev_doc.md](dev_doc.md).
 - **El estado del mute tiene una sola fuente de verdad.** El icono se pinta desde
   lo que informa Wave Link, no desde lo que el plugin cree haber hecho. Mutear
   desde la interfaz de Wave Link se refleja en la tecla.
-- **Se puede diagnosticar sin el dispositivo.** El cliente de Wave Link y la
-  pantalla de configuración se pueden ejercer por separado.
+- **Se puede diagnosticar sin el dispositivo.** Cuatro herramientas en `scripts/`
+  cubren Wave Link, la pantalla de configuración, las caras y la recarga en vivo.
+- **Cuatro acciones, todas con estado real en la tecla**: nivel, mute, destino y
+  avisos de "sin destino" o "sin conexión".
 
 ### Lo que es frágil
 
 - **La proporción real del panel del dial sigue sin medirse.** Se dibuja en 200×100
   porque los paneles del plugin oficial dan ~2:1, pero nunca se confirmó con el
   aparato (`npm run dev:calibrate` está para eso).
-- **Sigue sin haber tests automatizados.** Las herramientas de `scripts/` hacen
-  fácil verificar a mano, pero nada corre solo ni detecta una regresión.
-- **`getTarget()` reconstruye la lista entera** (21 objetos hoy) en cada consulta,
-  y se consulta una vez por tecla en cada notificación de Wave Link.
-- **Solo Windows.** La ruta del `ws-info.json` es de Windows y el manifest no
-  declara `CodePathMac`. Tampoco es una limitación nuestra: el SDK V2 todavía no
-  tiene Node embebido en Mac.
-- **Cero tests automatizados.** Todo se valida a mano.
+- **Sin tests automatizados.** Las herramientas de `scripts/` hacen fácil verificar
+  a mano, pero nada corre solo ni detecta una regresión.
+- **Solo Windows**, por decisión: macOS se sacó del plan a pedido del usuario
+  (2026-08-12). El SDK V2 tampoco trae Node embebido en Mac todavía.
+- **El ajuste fino no se activa en el AKP05E**: el `pressed` de `dialRotate` nunca
+  llega en `true`, así que el gesto queda inerte (sin romper nada).
 
 ## Comparación con el plugin oficial de Elgato
 
@@ -272,20 +273,58 @@ sintético en rango dB. Si aparece un dispositivo con otro rango, o con la
 es la 2, lo anota como error. No bloquea: una revisión nueva podría ser
 compatible, pero deja una línea clara si algún día algo se comporta raro.
 
-#### 11. Control de efectos — requiere ingeniería inversa
+#### 11. Control de efectos — ✅ HECHO (2026-08-12)
 
-El oficial toggplea efectos de hardware (supresión de ruido, EQ, compresión,
-Clipguard) y efectos VST/AU por canal. El objeto de canal **sí trae un array
-`effects`**, así que la información está expuesta; lo que no sabemos es con qué
-método se escribe, y el servidor **no tiene introspección** (`rpc.discover` y
-compañía no existen).
+Acción **Audio Effect**: enciende y apaga un efecto VST/AU cargado en un canal. La
+tecla muestra el canal, el efecto y si está encendido, con el borde en verde
+cuando lo está.
 
-**Cómo destrabarlo.** Espiar el tráfico del plugin oficial contra Wave Link en
-una máquina con Stream Deck instalado, o cargar un VST en Wave Link y mirar qué
-notificación llega cuando se lo activa desde la interfaz — eso último se puede
-hacer acá mismo con el probe, sin necesidad de un Stream Deck.
+**No hace falta `setPluginInfo`.** Se escribe con `setChannel` y
+`effects: [{id, isEnabled}]`, el mismo patrón que los mixes de un canal. El objeto
+de efecto es `{ id, name, isEnabled }`.
 
-**Esfuerzo** alto · **Riesgo** alto. Solo vale la pena si realmente usás efectos.
+Probado corriendo el proceso real contra un host simulado: dos pulsaciones
+encienden y apagan el efecto, y la cara de la tecla acompaña el estado.
+
+**Ojo con la notificación.** `channelChanged` responde con **solo** `effects`
+—sin `mixes`, `level` ni `isMuted`— así que el merge superficial que ya existía
+los conserva. Pero el array `effects` en sí se pasa por `mergeById`, por las
+dudas de que Wave Link mande solo el efecto que cambió, como hace con las
+salidas. Con un solo efecto cargado no se pudo comprobar cuál de las dos cosas
+hace.
+
+<details>
+<summary>Cómo se encontraron los nombres (sirve para cualquier duda futura del protocolo)</summary>
+
+El servidor no tiene introspección, pero Wave Link es una app .NET y sus
+ensamblados guardan los literales. Extrayendo cadenas de `Elgato.WaveLink.dll` y
+`Elgato.WaveLink.AppLogic.dll` en `C:\Program Files\WindowsApps\Elgato.WaveLink_*\`
+salieron los candidatos, y probándolos contra el servidor se confirmó cuáles
+existen (`-32601` = no existe).
+
+**Existen pero no usamos**: `setPluginInfo`, `setSubscription`.
+
+**No existen**: `setEffect`, `getEffect`, `setChannelEffect`, `getChannelEffects`,
+`setEffects`, `getDspEffects`, `setDspEffect`, `getPluginInfo`, `getPlugins`,
+`getAudioPlugins`, `setParameter`, `getWaveDeviceSettings`, `setWaveDeviceSetting`,
+`getMicrophoneSettings`.
+
+**Notificaciones que existen y no escuchamos**: `effectUpdate`,
+`levelMeterChanged`, `focusedAppChanged`, `windowModeChanged`, `inputUpdate`,
+`mixUpdate`, `outputUpdate`.
+
+El primer intento se frenó porque no había ningún efecto cargado en la máquina:
+sin un ejemplo vivo no se podía deducir la forma del objeto ni probar nada. Con
+un VST agregado, la forma quedó a la vista en `getChannels` y el resto salió
+solo.
+</details>
+
+**Lo que quedó afuera**: los efectos de **hardware** del oficial (supresión de
+ruido, EQ, compresión, Clipguard) son otra cosa — viven en el micrófono Elgato,
+no en el canal, y no aparecen en `channel.effects`. Sin hardware Elgato en esta
+máquina no hay forma de investigarlos, y `getWaveDeviceSettings` y compañía no
+existen. Si algún día hace falta, el camino es el mismo: minar los ensamblados y
+probar contra el servidor.
 
 #### 12. Buscar destinos por índice — ✅ HECHO (2026-08-12)
 
@@ -310,14 +349,6 @@ los dos idiomas y con un idioma sin archivo (`fr`), que cae a inglés limpio.
 **No agregar archivos de idioma con el bloque `Localization` vacío**: el recorrido
 del SDK los tomaría como válidos y dejaría la pantalla llena de `undefined`. Es
 mejor no tener el archivo.
-
-#### 14. Soporte para macOS
-
-Bloqueado por el SDK: el host de Mac todavía no trae Node embebido. Cuando lo
-tenga, hay que agregar `CodePathMac` y resolver la ruta del `ws-info.json` en
-Mac. Sin una máquina Mac para probar, no tiene sentido escribirlo a ciegas.
-
-**Bloqueado.**
 
 ## Lo que conviene no hacer
 
