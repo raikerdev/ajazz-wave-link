@@ -25,18 +25,12 @@ el dispositivo real. Detalles de implementación en [dev_doc.md](dev_doc.md).
 
 ### Lo que es frágil
 
-- **No hay ninguna señal de vida en la tecla.** El icono es siempre el mismo: no
-  muestra el volumen, ni a qué canal apunta, ni si Wave Link está caído. El único
-  aviso es el parpadeo de error al intentar usarla.
-- **Giro rápido.** Cada tick calcula el nivel nuevo a partir del que tiene
-  cacheado. Si las notificaciones de Wave Link llegan más lento que los ticks, el
-  cálculo parte de un valor viejo y el volumen se queda corto o "se traba". Es el
-  defecto más probable de que aparezca en uso real.
-- **Una llamada RPC por tick.** Un giro rápido puede disparar veinte mensajes en
-  un segundo. Hoy aguanta, pero no hay ningún control.
-- **Los arneses de diagnóstico no existen como archivos.** [dev_doc.md](dev_doc.md)
-  explica cómo probar el cliente y la pantalla de configuración por separado,
-  pero hay que escribir esos scripts de cero cada vez.
+- **La proporción real del panel del dial sigue sin medirse.** Se dibuja en 200×100
+  porque los paneles del plugin oficial dan ~2:1, pero nunca se confirmó con el
+  aparato (`npm run dev:calibrate` está para eso).
+- **Los arneses de diagnóstico no están todos versionados.** La recarga en vivo sí
+  (`scripts/dev-mode.mjs`), pero el probe de Wave Link y el arnés de la pantalla
+  de configuración hay que reescribirlos cada vez.
 - **`getTarget()` reconstruye la lista entera** (21 objetos hoy) en cada consulta,
   y se consulta una vez por tecla en cada notificación de Wave Link.
 - **Solo Windows.** La ruta del `ws-info.json` es de Windows y el manifest no
@@ -121,7 +115,14 @@ hace lo que promete.
 
 ### Prioridad alta
 
-#### 1. Mostrar el volumen en la tecla
+#### 1. Mostrar el volumen en la tecla — ✅ HECHO (2026-08-11)
+
+Implementado en `plugin/render/keyFace.js`. La tecla muestra el icono real del
+canal, la etiqueta, el porcentaje y una barra de nivel; en mute pasa a rojo y
+dice `MUTE`. Detalles en [dev_doc.md](dev_doc.md#pluginrenderkeyfacejs).
+
+Efecto lateral: como la cara también dice `Sin destino` y `Sin conexión`, el
+punto 3 queda cubierto **para el Volume Knob**; falta el Mute Toggle.
 
 **Problema.** Girás el dial a ciegas: hay que mirar la pantalla de la
 computadora para saber en cuánto quedó.
@@ -148,35 +149,32 @@ descartó una vez pisarlo. Conviene limitar la frecuencia de repintado (unos
 
 **Esfuerzo** medio · **Riesgo** bajo.
 
-#### 2. Arreglar el giro rápido
+#### 2. Arreglar el giro rápido — ✅ HECHO (2026-08-11)
 
-**Problema.** El descrito arriba: el nivel se lee de un cache que puede venir
-atrasado.
+Resuelto con `nudgeLevel()` en `plugin/wavelink/client.js`: cada tick suma sobre
+el último valor que decidimos nosotros, no sobre el último que confirmó Wave
+Link, y las escrituras se agrupan en una cada 40ms. El valor optimista se
+descarta al converger o tras 1,5s sin confirmación, así que una escritura perdida
+se autocorrige. Detalles en
+[dev_doc.md](dev_doc.md#giro-rápido-niveles-optimistas).
 
-**Propuesta.** Mantener un nivel optimista por destino: al girar, calcular sobre
-el último valor que *mandamos* y no sobre el último que *recibimos*, y descartar
-ese valor optimista cuando llega la confirmación de Wave Link o después de un
-tiempo sin actividad.
+Medido contra la instancia real: 15 detentes seguidos acumulan exacto (0.200 →
+0.500, sin pasos perdidos), se ven en la tecla al instante y salen en **una** sola
+llamada RPC en vez de quince.
 
-**Dónde.** `plugin/wavelink/client.js`, dentro de `setLevel` y del manejo de
-notificaciones, para que quede encapsulado y `index.js` no se entere.
+Queda como efecto secundario que la respuesta se siente más rápida, porque la
+tecla ya no espera el ida y vuelta para repintarse.
 
-**Combinar con.** Agrupar los ticks: acumular el desplazamiento y mandar una sola
-llamada cada ~50ms en vez de una por tick. Resuelve también el punto de las
-veinte llamadas por segundo.
-
-**Esfuerzo** medio · **Riesgo** medio — es el cambio con más chance de introducir
-un error sutil, así que conviene hacerlo con el arnés del punto 5 ya armado.
-
-#### 3. Avisar cuando Wave Link no está
+#### 3. Avisar cuando Wave Link no está — ✅ HECHO (2026-08-11)
 
 **Problema.** Si Wave Link está cerrado, las teclas se ven normales y solo
 parpadean al apretarlas. La pantalla de configuración sí lo dice, pero hay que
 abrirla.
 
-**Propuesta.** Atenuar el icono o mostrar uno específico mientras
-`wavelink.isReady()` sea falso. Ya existen los eventos `ready` y `disconnected`
-del cliente; solo falta engancharlos a un repintado.
+Las dos acciones muestran ahora `Sin destino` o `Sin conexión` en la cara de la
+tecla, enganchadas al evento `disconnected` del cliente. El Mute Toggle además
+dejó los dos PNG fijos y pasó a dibujarse con `muteFace`, que muestra el nivel
+mientras suena. Ver [dev_doc.md](dev_doc.md#la-cara-del-mute-toggle).
 
 **Esfuerzo** bajo · **Riesgo** bajo.
 
@@ -190,18 +188,20 @@ como ejemplo en [dev_doc.md](dev_doc.md#receta-2--agregar-un-ajuste-nuevo).
 
 **Esfuerzo** bajo · **Riesgo** bajo.
 
-#### 5. Guardar los arneses de diagnóstico como scripts del repo
+#### 5. Guardar los arneses de diagnóstico como scripts del repo — 🟡 PARCIAL
 
-Convertir en archivos permanentes las dos herramientas que ya se usaron y
-funcionaron:
+**Hecho (2026-08-11)**: `scripts/dev-mode.mjs` + `plugin/dev/devMode.js`, la
+recarga en vivo del renderer contra el dispositivo real, con patrón de
+calibración incluido. Ver [dev_doc.md](dev_doc.md#iterar-sobre-el-diseño-de-la-tecla-en-vivo).
+
+**Falta** convertir en archivos permanentes las otras dos herramientas, que hoy
+se reescriben en la carpeta temporal cada vez que hacen falta:
 
 - `scripts/wavelink-probe.mjs` — conecta a Wave Link e imprime los destinos con
   su nivel y su mute. Sirve para ver qué ve el plugin sin abrir la aplicación.
 - `scripts/pi-harness.mjs` — sirve la pantalla de configuración por HTTP y simula
   al host por WebSocket. Permite trabajar en la interfaz sin reinstalar ni tocar
   el dispositivo.
-
-Es la mejora con mejor relación esfuerzo/beneficio: acelera todas las demás.
 
 **Esfuerzo** bajo · **Riesgo** ninguno.
 

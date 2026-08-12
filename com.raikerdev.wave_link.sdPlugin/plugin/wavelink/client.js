@@ -28,6 +28,18 @@ const FALLBACK_PORTS = Array.from({ length: 10 }, (_, i) => 1884 + i);
 const RECONNECT_DELAY_MS = 3000;
 const CALL_TIMEOUT_MS = 5000;
 
+/** How long ticks pile up before one write goes out. One frame's worth. */
+const LEVEL_FLUSH_MS = 40;
+
+/**
+ * How long an optimistic level survives without Wave Link agreeing. Long enough
+ * to cover a slow round trip, short enough that a rejected write self-corrects.
+ */
+const LEVEL_SETTLE_MS = 1500;
+
+/** Levels are floats; anything under this counts as "Wave Link caught up". */
+const LEVEL_EPSILON = 0.005;
+
 function discoverPort() {
     try {
         const parsed = JSON.parse(readFileSync(WS_INFO_PATH, 'utf-8'));
@@ -60,6 +72,8 @@ class WaveLinkClient extends EventEmitter {
         this.outputDevices = [];
         this.mixes = [];
         this.connecting = false;
+        /** Levels we have asked for but Wave Link has not confirmed yet. */
+        this.optimistic = new Map();
     }
 
     start() {
@@ -287,11 +301,102 @@ class WaveLinkClient extends EventEmitter {
             });
         }
 
-        return targets;
+        if (this.optimistic.size === 0) return targets;
+
+        // A dial mid-spin is ahead of what Wave Link has confirmed; show that.
+        return targets.map(t => {
+            const level = this.applyOptimistic(this.optimisticKey(t.targetType, t.targetId), t.level);
+            return level === t.level ? t : { ...t, level };
+        });
     }
 
     getTarget(targetType, targetId) {
         return this.getTargets().find(t => t.targetType === targetType && t.targetId === targetId);
+    }
+
+    /** A channelMix id already contains "::", so the key needs a separator ids cannot hold. */
+    optimisticKey(targetType, targetId) {
+        return `${targetType} ${targetId}`;
+    }
+
+    /**
+     * The level to believe: ours while a write is in flight, Wave Link's otherwise.
+     *
+     * The entry is dropped as soon as Wave Link reports the value we asked for, or
+     * once it has had `LEVEL_SETTLE_MS` to do so and hasn't — which is what makes a
+     * rejected or lost write correct itself instead of freezing the display.
+     */
+    applyOptimistic(key, reportedLevel) {
+        const entry = this.optimistic.get(key);
+        if (!entry) return reportedLevel;
+
+        if (Math.abs(reportedLevel - entry.level) < LEVEL_EPSILON) {
+            this.optimistic.delete(key);
+            return reportedLevel;
+        }
+        if (!entry.timer && Date.now() > entry.expires) {
+            this.optimistic.delete(key);
+            return reportedLevel;
+        }
+        return entry.level;
+    }
+
+    /**
+     * Moves a level by `delta` and returns where it landed.
+     *
+     * This exists because reading the cached level on every detent does not
+     * survive a fast spin: Wave Link's confirmations arrive slower than the ticks
+     * do, so several turns in a row compute from the same stale value and the
+     * fader crawls or sticks. Here each tick adds to the value *we* last decided
+     * on, and the writes are coalesced into one per `LEVEL_FLUSH_MS` instead of
+     * one per detent.
+     */
+    nudgeLevel(targetType, targetId, delta) {
+        const key = this.optimisticKey(targetType, targetId);
+        const current = this.getTarget(targetType, targetId);
+        if (!current) return undefined;
+
+        const next = clamp01(current.level + delta);
+        const entry = this.optimistic.get(key) || { timer: null };
+        entry.level = next;
+        entry.expires = Date.now() + LEVEL_SETTLE_MS;
+        this.optimistic.set(key, entry);
+
+        if (!entry.timer) {
+            entry.timer = setTimeout(() => {
+                entry.timer = null;
+                entry.expires = Date.now() + LEVEL_SETTLE_MS;
+                this.setLevel(targetType, targetId, entry.level).catch(err => {
+                    this.log.error(`wavelink: setLevel failed: ${err.message}`);
+                });
+            }, LEVEL_FLUSH_MS);
+        }
+
+        // Repaint now rather than waiting for the round trip.
+        this.emit('changed');
+        return next;
+    }
+
+    /**
+     * The channel's own artwork as a base64 PNG, or undefined.
+     *
+     * Wave Link ships one per channel in `channel.image.imgData`: the icon of the
+     * assigned app for hardware channels (`isAppIcon: true`), or Wave Link's own
+     * artwork for the software ones. Both are worth showing, so the flag is not
+     * used to filter.
+     *
+     * Only channels carry it: mixes report an icon *name* instead (`image.name`,
+     * e.g. "headphones") and input/output devices carry no image at all. It is
+     * deliberately kept out of `getTargets()` so the property inspector's payload
+     * stays small.
+     */
+    getIcon(targetType, targetId) {
+        let channelId;
+        if (targetType === 'channel') channelId = targetId;
+        else if (targetType === 'channelMix') [channelId] = targetId.split(CHANNEL_MIX_SEPARATOR);
+        else return undefined;
+
+        return this.channels.find(c => c.id === channelId)?.image?.imgData;
     }
 
     async setLevel(targetType, targetId, level) {

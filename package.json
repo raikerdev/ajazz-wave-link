@@ -8,6 +8,9 @@
     "deps": "cd com.raikerdev.wave_link.sdPlugin/plugin && npm install",
     "icons": "node scripts/gen-icons.mjs",
     "build": "cd com.raikerdev.wave_link.sdPlugin/plugin && npm run build",
-    "install-plugin": "npm run build"
+    "install-plugin": "npm run build",
+    "dev:on": "node scripts/dev-mode.mjs on",
+    "dev:calibrate": "node scripts/dev-mode.mjs calibrate",
+    "dev:off": "node scripts/dev-mode.mjs off"
   }
 }

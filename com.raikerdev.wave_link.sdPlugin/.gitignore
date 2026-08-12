@@ -2,3 +2,6 @@ plugin/node_modules/**
 plugin/log/
 plugin/build/
 plugin/data/
+
+# Live-reload switch, written into the installed copy by scripts/dev-mode.mjs
+dev.json

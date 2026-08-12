@@ -1,5 +1,12 @@
 const { Plugins, Actions, log } = require('./utils/plugin');
 const { WaveLinkClient } = require('./wavelink/client');
+const devMode = require('./dev/devMode');
+
+/**
+ * The artwork module. Normally the bundled one; with a `dev.json` present it is
+ * swapped for the copy on disk and reloaded on every save (see dev/devMode.js).
+ */
+let render = require('./render/keyFace');
 
 const plugin = new Plugins('wave_link');
 const wavelink = new WaveLinkClient(log);
@@ -7,8 +14,24 @@ const wavelink = new WaveLinkClient(log);
 /** How much one dial detent moves the fader, as a fraction of the full range. */
 const STEP_PER_TICK = 0.02;
 
+/**
+ * Floor between repaints. Wave Link emits a notification per level change, so a
+ * fast spin would otherwise push dozens of images per second down the socket.
+ */
+const REPAINT_INTERVAL_MS = 100;
+
 /** Context of the property inspector that is currently open, if any. */
 let piContext = null;
+
+/**
+ * Which surface each visible Volume Knob lives on, keyed by context.
+ * The strip above a dial is 2:1 while a key is square, so they need different
+ * artwork. Only `willAppear` reports the controller, hence the bookkeeping.
+ */
+const surfaceOf = new Map();
+
+/** Filled in below; inert unless a `dev.json` turns live-reload on. */
+let dev = { active: false, calibrate: false };
 
 const DEFAULT_SETTINGS = { targetType: '', targetId: '', targetName: '' };
 
@@ -48,20 +71,94 @@ async function toggleMute(action, event) {
     }
 }
 
-/** Points a Mute Toggle's icon at the real mute state of the target in `settings`. */
-function paintMuteState(context, settings) {
+/** Draws a Mute Toggle's key face: the speaker, and the level in a supporting role. */
+function paintMuteToggle(context, settings) {
     const { targetType, targetId } = settings || {};
-    if (!targetType || !targetId) return;
+
+    if (!targetType || !targetId) {
+        plugin.setImage(context, render.toDataUri(render.unconfiguredFace('Sin destino')));
+        return;
+    }
+
     const target = wavelink.getTarget(targetType, targetId);
-    if (target) plugin.setState(context, target.isMuted ? 1 : 0);
+    if (!target) {
+        const why = wavelink.isReady() ? 'No existe' : 'Sin conexión';
+        plugin.setImage(context, render.toDataUri(render.unconfiguredFace(why)));
+        return;
+    }
+
+    // The drawn face is what the user sees, but the state is still set: it is the
+    // host's own notion of mute, and it survives if the image ever fails to render.
+    plugin.setState(context, target.isMuted ? 1 : 0);
+
+    const icon = wavelink.getIcon(targetType, targetId);
+    plugin.setImage(context, render.toDataUri(render.muteFace(target, icon)));
 }
 
-/** Repaints every visible Mute Toggle, e.g. after Wave Link reports a change. */
-function syncMuteToggles() {
-    if (!plugin.mutetoggle) return;
-    for (const [context, settings] of Object.entries(plugin.mutetoggle.data)) {
-        paintMuteState(context, settings);
+/** Draws a Volume Knob's face: the target's icon, its level and its mute state. */
+function paintVolumeKnob(context, settings) {
+    const surface = surfaceOf.get(context) || 'key';
+
+    if (dev.calibrate) {
+        plugin.setImage(context, render.toDataUri(render.calibrationFace(surface)));
+        return;
     }
+
+    const { targetType, targetId } = settings || {};
+
+    if (!targetType || !targetId) {
+        plugin.setImage(context, render.toDataUri(render.unconfiguredFace('Sin destino', surface)));
+        return;
+    }
+
+    const target = wavelink.getTarget(targetType, targetId);
+    if (!target) {
+        const why = wavelink.isReady() ? 'No existe' : 'Sin conexión';
+        plugin.setImage(context, render.toDataUri(render.unconfiguredFace(why, surface)));
+        return;
+    }
+
+    const icon = wavelink.getIcon(targetType, targetId);
+    plugin.setImage(context, render.toDataUri(render.volumeFace(target, icon, surface)));
+}
+
+let repaintTimer = null;
+let repaintQueued = false;
+
+/** Redraws everything currently on screen. Both actions now show a live level. */
+function repaintAll() {
+    if (plugin.volumeknob) {
+        for (const [context, settings] of Object.entries(plugin.volumeknob.data)) {
+            paintVolumeKnob(context, settings);
+        }
+    }
+    if (plugin.mutetoggle) {
+        for (const [context, settings] of Object.entries(plugin.mutetoggle.data)) {
+            paintMuteToggle(context, settings);
+        }
+    }
+}
+
+/**
+ * Repaints at most once per `REPAINT_INTERVAL_MS`. Leading edge, so the first
+ * turn of the dial shows up immediately, plus one trailing pass so the final
+ * resting value is never the one that got dropped.
+ */
+function requestRepaint() {
+    if (repaintTimer) {
+        repaintQueued = true;
+        return;
+    }
+
+    repaintAll();
+
+    repaintTimer = setTimeout(() => {
+        repaintTimer = null;
+        if (repaintQueued) {
+            repaintQueued = false;
+            requestRepaint();
+        }
+    }, REPAINT_INTERVAL_MS);
 }
 
 /**
@@ -80,12 +177,23 @@ function pushTargets() {
     });
 }
 
+// Live-reload the artwork while iterating on it. No-op in a normal install.
+dev = devMode.start(reloaded => {
+    render = reloaded;
+    requestRepaint();
+}, log);
+if (dev.renderer) render = dev.renderer;
+
 wavelink.on('ready', () => {
-    syncMuteToggles();
+    requestRepaint();
     // A property inspector opened before Wave Link was up would have got an empty list.
     if (piContext) pushTargets();
 });
-wavelink.on('changed', syncMuteToggles);
+
+wavelink.on('changed', requestRepaint);
+
+// Nothing can be read while disconnected, so the keys say so instead of lying.
+wavelink.on('disconnected', requestRepaint);
 
 wavelink.start();
 
@@ -116,6 +224,21 @@ function targetActionBase() {
 plugin.volumeknob = new Actions({
     ...targetActionBase(),
 
+    // Draw the real level as soon as the key appears, and again whenever the
+    // property inspector points it somewhere else.
+    _willAppear({ context, payload }) {
+        surfaceOf.set(context, payload?.controller === 'Knob' ? 'dial' : 'key');
+        paintVolumeKnob(context, payload?.settings);
+    },
+
+    _willDisappear({ context }) {
+        surfaceOf.delete(context);
+    },
+
+    _didReceiveSettings({ context, payload }) {
+        paintVolumeKnob(context, payload?.settings);
+    },
+
     dialRotate(event) {
         const { context, payload } = event;
         const target = resolveTarget(this, event);
@@ -123,11 +246,9 @@ plugin.volumeknob = new Actions({
             reportUnavailable(context);
             return;
         }
-        const next = target.level + payload.ticks * STEP_PER_TICK;
-        wavelink.setLevel(target.targetType, target.targetId, next).catch(err => {
-            log.error(`setLevel failed for ${target.targetName}: ${err.message}`);
-            plugin.showAlert(context);
-        });
+        // Accumulates the detents and writes once the spin settles, so turning fast
+        // does not compute every step from a level Wave Link has not caught up to.
+        wavelink.nudgeLevel(target.targetType, target.targetId, payload.ticks * STEP_PER_TICK);
     },
 
     // Pressing the dial, or the key when this action sits on a keypad, toggles mute.
@@ -143,19 +264,19 @@ plugin.volumeknob = new Actions({
 plugin.mutetoggle = new Actions({
     ...targetActionBase(),
 
-    // Paint the right icon as soon as the key appears, and again whenever the
+    // Paint the right face as soon as the key appears, and again whenever the
     // property inspector points it at a different target.
     _willAppear({ context, payload }) {
-        paintMuteState(context, payload?.settings);
+        paintMuteToggle(context, payload?.settings);
     },
 
     _didReceiveSettings({ context, payload }) {
-        paintMuteState(context, payload?.settings);
+        paintMuteToggle(context, payload?.settings);
     },
 
     async keyUp(event) {
         await toggleMute(this, event);
         // Wave Link echoes the change back as a notification, which repaints the
-        // icon through syncMuteToggles — no optimistic setState needed here.
+        // face through requestRepaint — no optimistic painting needed here.
     }
 });
