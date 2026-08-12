@@ -111,13 +111,17 @@ los pasos exactos del formulario recién se ven una vez dentro.
    [bbs.key123.vip](https://bbs.key123.vip/) y `service@key123.vip`. Vale
    preguntar directamente por los requisitos de revisión: no están publicados.
 
-Para la ficha vas a necesitar preparar:
+**Los campos de la ficha ya están escritos**, listos para copiar, en
+[store/listing.md](store/listing.md). El resumen de lo que pide cada uno:
 
 - **Nombre**: "Wave Link Control". La
   [guía de estilo](https://sdk.key123.vip/en/guide/style-guide.html) pide no meter
   "Plugin" ni "Stream Dock" en el nombre — cumplimos.
-- **Descripción en inglés**, dejando claro que **requiere Elgato Wave Link 3** y
-  que por ahora es **solo Windows**.
+- **Descripción**, escrita en inglés y en chino, dejando claro en las dos que
+  **requiere Elgato Wave Link 3** y que por ahora es **solo Windows**.
+- **Precio**: 0 en los dos campos, el normal y el VIP. Es MIT y el código está
+  publicado.
+- **Idiomas**: inglés, español y chino simplificado.
 - **Imágenes**: ya están hechas, en [store/](store/README.md). El avatar 480×480
   lo genera `npm run icons`; las cinco imágenes 16:9 de la ficha,
   `npm run store -- --lang=all`, en inglés y en chino. Salen del renderer de

@@ -50,5 +50,8 @@ ejemplo, escritos en el script. Los niveles y estados también.
 
 ## Lo que la ficha necesita además de las imágenes
 
-Está en [RELEASE.md](../RELEASE.md): nombre, descripción, versión mínima del
-software y la advertencia de que requiere Elgato Wave Link 3 y es solo Windows.
+El resto de los campos del formulario —nombre, descripción, versión, precio,
+idiomas— están escritos y listos para copiar en [listing.md](listing.md).
+
+Los pasos de la publicación en sí, y lo que conviene repasar antes, están en
+[RELEASE.md](../RELEASE.md).
